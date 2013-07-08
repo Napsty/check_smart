@@ -7,6 +7,8 @@
 # Changes and Modifications
 # =========================
 # Feb 3, 2009: Kurt Yoder - initial version of script
+# Jul 8, 2013: Claudio Kuenzler www.claudiokuenzler.com 
+# - minor adaption to support hardware raids like megaraid
 
 use strict;
 use Getopt::Long;
@@ -60,10 +62,12 @@ if ($opt_d) {
                 exit $ERRORS{'UNKNOWN'};
         }
 
-        if(grep {$opt_i eq $_} ('ata', 'scsi')){
+	# Allow all device types currently supported by smartctl
+	# See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid)/) {
                 $interface = $opt_i;
         }
-        else{
+        else {
                 print "invalid interface $opt_i for $opt_d!\n\n";
                 print_help();
                 exit $ERRORS{'UNKNOWN'};
@@ -190,7 +194,8 @@ warn "(debug) output:\n@output\n\n" if $opt_debug;
 my @perfdata = qw//;
 
 # separate metric-gathering and output analysis for ATA vs SCSI SMART output
-if ($interface eq 'ata'){
+# Yeah - but megaraid is the same output as ata
+if ($interface =~ m/(ata|megaraid)/) {
         foreach my $line(@output){
                 # get lines that look like this:
                 #    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m

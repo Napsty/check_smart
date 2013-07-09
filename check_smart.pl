@@ -6,9 +6,9 @@
 #
 # Changes and Modifications
 # =========================
-# Feb 3, 2009: Kurt Yoder - initial version of script
-# Jul 8, 2013: Claudio Kuenzler www.claudiokuenzler.com 
-# - minor adaption to support hardware raids like megaraid
+# Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
+# Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
+# Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
 
 use strict;
 use Getopt::Long;
@@ -16,7 +16,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 1.0 $';
+my $revision = '$Revision: 2.1 $';
 
 use lib '/usr/lib/nagios/plugins/';
 use utils qw(%ERRORS &print_revision &support &usage);
@@ -292,10 +292,11 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "Usage: $basename (--device=<SMART device> --interface=(ata|scsi)|-h|-v) [--debug]\n";
+        print "Usage: $basename (--device=<block device> --interface=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)|-h|-v) [--debug]\n";
         print "  --debug: show debugging information\n";
-        print "  -d/--device: a device to be SMART monitored, eg /dev/sda\n";
-        print "  -i/--interface: ata or scsi, depending upon the device's interface type\n";
+        print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
+        print "  -i/--interface: set device's interface type\n";
+        print "  (See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -h/--help: this help\n";
         print "  -v/--version: Version number\n";
         support();

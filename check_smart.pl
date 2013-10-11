@@ -9,6 +9,7 @@
 # Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
 # Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
 # Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
+# Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
 
 use strict;
 use Getopt::Long;
@@ -16,12 +17,13 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 2.1 $';
+my $revision = '$Revision: 3.0 $';
 
-use lib '/usr/lib/nagios/plugins/';
+use FindBin;
+use lib $FindBin::Bin;
 use utils qw(%ERRORS &print_revision &support &usage);
 
-$ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin';
+$ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
@@ -53,17 +55,17 @@ if ($opt_d) {
                 exit $ERRORS{'UNKNOWN'};
         }
 
-        if (-b $opt_d){
+        if (-b $opt_d || -c $opt_d){
                 $device = $opt_d;
         }
         else{
-                print "$opt_d is not a valid block device!\n\n";
+                print "$opt_d is not a valid block/character special device!\n\n";
                 print_help();
                 exit $ERRORS{'UNKNOWN'};
         }
 
-	# Allow all device types currently supported by smartctl
-	# See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
+        # Allow all device types currently supported by smartctl
+        # See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
         if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid)/) {
                 $interface = $opt_i;
         }
@@ -79,7 +81,7 @@ else{
         exit $ERRORS{'UNKNOWN'};
 }
 
-my $smart_command = '/usr/bin/sudo /usr/sbin/smartctl';
+my $smart_command = 'sudo smartctl';
 my @error_messages = qw//;
 my $exit_status = 'OK';
 

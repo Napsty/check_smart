@@ -10,7 +10,7 @@
 # Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
 # Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
 # Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
-# Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD)
+# Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
 
 use strict;
 use Getopt::Long;
@@ -18,7 +18,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 3.0 $';
+my $revision = '$Revision: 3.1 $';
 
 use FindBin;
 use lib $FindBin::Bin;

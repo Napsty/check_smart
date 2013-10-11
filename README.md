@@ -20,3 +20,7 @@ MegaRAID on Linux:
 Intel RAID on FreeBSD 9.2 ("kldload mfip.ko" required):
 
     /usr/local/libexec/nagios/check_smart.pl -d /dev/pass0 -i scsi
+    
+SATA drives behind Intel RAID on FreeBSD 9.2 ("kldload mfip.ko" required):
+
+    /usr/local/libexec/nagios/check_smart.pl -d /dev/pass12 -i sat

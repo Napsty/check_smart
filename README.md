@@ -11,4 +11,4 @@ I modified the plugin so it also works with disks attached to raid controllers.
 
 Successfully tested with MegaRAID.
 
-/usr/lib/nagios/plugins/check_smart -d /dev/sda -i megaraid,8
+/usr/lib/nagios/plugins/check_smart.pl -d /dev/sda -i megaraid,8

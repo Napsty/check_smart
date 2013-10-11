@@ -10,6 +10,7 @@
 # Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
 # Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
 # Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
+# Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD)
 
 use strict;
 use Getopt::Long;
@@ -66,7 +67,7 @@ if ($opt_d) {
 
         # Allow all device types currently supported by smartctl
         # See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid)/) {
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
                 $interface = $opt_i;
         }
         else {
@@ -197,7 +198,7 @@ my @perfdata = qw//;
 
 # separate metric-gathering and output analysis for ATA vs SCSI SMART output
 # Yeah - but megaraid is the same output as ata
-if ($interface =~ m/(ata|megaraid)/) {
+if ($interface =~ m/(ata|megaraid|sat)/) {
         foreach my $line(@output){
                 # get lines that look like this:
                 #    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m

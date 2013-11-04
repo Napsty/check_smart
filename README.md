@@ -29,3 +29,6 @@ SCSI drives behind HP RAID (CCISS) on FreeBSD 6.0:
 
     /usr/local/libexec/nagios/check_smart.pl -d /dev/ciss0 -i cciss,0
     OK: no SMART errors detected|defect_list=0 sent_blocks=3093462752 temperature=24;;68
+    
+    /usr/local/libexec/nagios/check_smart.pl -d /dev/ciss0 -i cciss,3
+    WARNING: 48 Elements in grown defect list | defect_list=48 sent_blocks=1137657348 temperature=22;;68

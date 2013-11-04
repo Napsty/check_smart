@@ -11,6 +11,20 @@ I modified the plugin so it also works with disks attached to raid controllers.
 
 Oct 2013: The plugin now also works on FreeBSD (tested on 9.2).
 
+Sudoers entry
+-------------------------
+This plugin needs to run as root, otherwise you're not able to lauch smartctl correctly. 
+You have two options
+
+1) Launch the plugin itself as root with sudo
+
+2) Lauch the plugin as Nagios user and the smartctl command as root with sudo
+
+Entry in sudoers (of course adapt your paths if necessary):
+
+    nagios          ALL = NOPASSWD: /usr/lib/nagios/plugins/check_smart.pl    # for option 1
+    nagios          ALL = NOPASSWD: /usr/local/sbin/smartctl                  # for option 2
+
 Successful tests/examples
 -------------------------
 MegaRAID on Linux:

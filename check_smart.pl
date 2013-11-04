@@ -11,6 +11,8 @@
 # Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
 # Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
 # Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
+# Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
+# Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
 
 use strict;
 use Getopt::Long;
@@ -18,7 +20,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 3.1 $';
+my $revision = '$Revision: 3.3 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -102,9 +104,9 @@ my $found_status = 0;
 my $line_str = 'SMART overall-health self-assessment test result: '; # ATA SMART line
 my $ok_str = 'PASSED'; # ATA SMART OK string
 
-if ($interface eq 'scsi'){
-        $line_str = 'SMART Health Status: '; # SCSI SMART line
-        $ok_str = 'OK'; #SCSI SMART OK string
+if ($interface =~ m/(scsi|cciss)/){
+        $line_str = 'SMART Health Status: '; # SCSI and CCISS SMART line
+        $ok_str = 'OK'; #SCSI and CCISS SMART OK string
 }
 
 foreach my $line (@output){
@@ -240,6 +242,13 @@ else{
                 }
                 elsif ($line =~ /Elements in grown defect list:\s+(\d+)/){
                         push (@perfdata, "defect_list=$1");
+                        my $defectlist = $1;
+                        # check for elements in grown defect list
+                        if ($defectlist > 0) {
+                          push(@error_messages, "$defectlist Elements in grown defect list");
+                          escalate_status('WARNING');
+                          warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+                        }
                 }
                 elsif ($line =~ /Blocks sent to initiator =\s+(\d+)/){
                         push (@perfdata, "sent_blocks=$1");
@@ -318,3 +327,4 @@ sub escalate_status {
         }
         $exit_status = $requested_status;
 }
+

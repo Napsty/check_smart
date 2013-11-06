@@ -27,6 +27,10 @@ Entry in sudoers (of course adapt your paths if necessary):
 
 Successful tests/examples
 -------------------------
+SATA disk behind MDRaid (Software Raid) on Linux:
+
+    /usr/lib/nagios/plugins/check_smart.pl -d /dev/sda -i ata
+
 MegaRAID on Linux:
 
     /usr/lib/nagios/plugins/check_smart.pl -d /dev/sda -i megaraid,8

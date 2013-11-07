@@ -13,6 +13,8 @@
 # Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
 # Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
 # Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
+# Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
+# Nov 6, 2013: Claudio Kuenzler - modified help (rev 4.0)
 
 use strict;
 use Getopt::Long;
@@ -20,7 +22,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 3.3 $';
+my $revision = '$Revision: 4.0 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -30,10 +32,11 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_d $opt_debug $opt_h $opt_i $opt_v);
+use vars qw($opt_b $opt_d $opt_debug $opt_h $opt_i $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"       => \$opt_debug,
+        "b=i"   => \$opt_b, "bad=i"  => \$opt_b,
         "d=s" => \$opt_d, "device=s"    => \$opt_d,
         "h"   => \$opt_h, "help"        => \$opt_h,
         "i=s" => \$opt_i, "interface=s" => \$opt_i,
@@ -84,7 +87,7 @@ else{
         exit $ERRORS{'UNKNOWN'};
 }
 
-my $smart_command = 'sudo smartctl';
+my $smart_command = 'smartctl';
 my @error_messages = qw//;
 my $exit_status = 'OK';
 
@@ -219,9 +222,22 @@ if ($interface =~ m/(ata|megaraid|sat)/) {
 
                 # do some manual checks
                 if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
+                  if ($opt_b) {
+                    if ($raw_value >= $opt_b) {
+                        push(@error_messages, "$raw_value Sectors pending re-allocation");
+                        escalate_status('WARNING');
+                        warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
+                    }
+                    elsif ($raw_value < $opt_b) {
+                        push(@error_messages, "$raw_value Sectors pending re-allocation (but less than threshold $opt_b)");
+                        warn "(debug) Current_Pending_Sector is non-zero ($raw_value) but less than $opt_b\n\n" if $opt_debug;
+                    }
+                  }
+                  else {
                         push(@error_messages, "Sectors pending re-allocation");
                         escalate_status('WARNING');
                         warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
+                  }
                 }
         }
 }
@@ -241,10 +257,22 @@ else{
                         $max_start_stop = $1;
                 }
                 elsif ($line =~ /Elements in grown defect list:\s+(\d+)/){
-                        push (@perfdata, "defect_list=$1");
                         my $defectlist = $1;
                         # check for elements in grown defect list
-                        if ($defectlist > 0) {
+                        if ($opt_b) {
+                          push (@perfdata, "defect_list=$defectlist;$opt_b;$opt_b;;");
+                          if ($defectlist >= $opt_b) {
+                            push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
+                            escalate_status('WARNING');
+                            warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+                          }
+                          elsif ($defectlist < $opt_b) {
+                            push(@error_messages, "$defectlist Elements in grown defect list (but less than threshold $opt_b)");
+                            warn "(debug) Elements in grown defect list is non-zero ($defectlist) but less than $opt_b\n\n" if $opt_debug;
+                          }
+                        }
+                        else {
+                          push (@perfdata, "defect_list=$defectlist");
                           push(@error_messages, "$defectlist Elements in grown defect list");
                           escalate_status('WARNING');
                           warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
@@ -296,7 +324,7 @@ if($exit_status ne 'OK'){
         $status_string = "$exit_status: ".join(', ', @error_messages);
 }
 else {
-        $status_string = "OK: no SMART errors detected";
+        $status_string = "$exit_status: ".join(', ', @error_messages);
 }
 
 print "$status_string|$perf_string\n";
@@ -304,14 +332,14 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "Usage: $basename (--device=<block device> --interface=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)|-h|-v) [--debug]\n";
-        print "  --debug: show debugging information\n";
+        print "\nUsage: $basename -d=<block device> -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
-        print "  -i/--interface: set device's interface type\n";
+        print "  -i/--interface: device's interface type\n";
         print "  (See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers for interface convention)\n";
+        print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
         print "  -h/--help: this help\n";
+        print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";
-        support();
 }
 
 # escalate an exit status IFF it's more severe than the previous exit status
@@ -327,4 +355,3 @@ sub escalate_status {
         }
         $exit_status = $requested_status;
 }
-

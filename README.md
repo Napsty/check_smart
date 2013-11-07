@@ -20,6 +20,7 @@ History
 * Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
 * Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
 * Nov 6, 2013: Claudio Kuenzler - modified help (rev 4.0)
+* Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
 
 
 Sudoers entry

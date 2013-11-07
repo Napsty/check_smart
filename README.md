@@ -11,6 +11,8 @@ I modified the plugin so it also works with disks attached to raid controllers.
 
 Oct 2013: The plugin now also works on FreeBSD (tested on 9.2).
 
+Nov 2013: Added a threshold option (-b|--bad) 
+
 Sudoers entry
 -------------------------
 This plugin needs to run as root, otherwise you're not able to lauch smartctl correctly. 
@@ -50,3 +52,10 @@ SCSI drives behind HP RAID (CCISS) on FreeBSD 6.0:
     
     /usr/local/libexec/nagios/check_smart.pl -d /dev/ciss0 -i cciss,3
     WARNING: 48 Elements in grown defect list | defect_list=48 sent_blocks=1137657348 temperature=22;;68
+    
+Using threshold option (-b) to ignore 1 bad element, warning only when 2 bad elements are found:
+
+    /usr/local/libexec/nagios/check_smart.pl -d /dev/ciss0 -i cciss,1 -b 2
+    OK: 1 Elements in grown defect list (but less than threshold 2)|defect_list=1;2;2;; sent_blocks=2769458900762624 temperature=27;;65
+
+    

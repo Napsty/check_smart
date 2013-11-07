@@ -7,11 +7,20 @@ I got aware, that this plugin is the best to monitor SMART values of hard drives
 Unfortunately to my big surprise, the plugin was not able to handle other device types than ata or scsi.
 Therefore disks attached to hardware raids like megaraid could not be checked.
 
-I modified the plugin so it also works with disks attached to raid controllers. 
+I modified the plugin so it also works with disks attached to raid controllers... and added other features.
 
-Oct 2013: The plugin now also works on FreeBSD (tested on 9.2).
+History
+-------------------------
+* Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
+* Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
+* Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
+* Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
+* Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
+* Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
+* Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
+* Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
+* Nov 6, 2013: Claudio Kuenzler - modified help (rev 4.0)
 
-Nov 2013: Added a threshold option (-b|--bad) 
 
 Sudoers entry
 -------------------------

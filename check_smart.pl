@@ -14,7 +14,8 @@
 # Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
 # Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
 # Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
-# Nov 6, 2013: Claudio Kuenzler - modified help (rev 4.0)
+# Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
+# Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
 
 use strict;
 use Getopt::Long;
@@ -22,7 +23,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 4.0 $';
+my $revision = '$Revision: 4.1 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -223,12 +224,12 @@ if ($interface =~ m/(ata|megaraid|sat)/) {
                 # do some manual checks
                 if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
                   if ($opt_b) {
-                    if ($raw_value >= $opt_b) {
+                    if (($raw_value > 0) && ($raw_value >= $opt_b)) {
                         push(@error_messages, "$raw_value Sectors pending re-allocation");
                         escalate_status('WARNING');
                         warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
                     }
-                    elsif ($raw_value < $opt_b) {
+                    elsif (($raw_value > 0) && ($raw_value < $opt_b)) {
                         push(@error_messages, "$raw_value Sectors pending re-allocation (but less than threshold $opt_b)");
                         warn "(debug) Current_Pending_Sector is non-zero ($raw_value) but less than $opt_b\n\n" if $opt_debug;
                     }
@@ -261,21 +262,23 @@ else{
                         # check for elements in grown defect list
                         if ($opt_b) {
                           push (@perfdata, "defect_list=$defectlist;$opt_b;$opt_b;;");
-                          if ($defectlist >= $opt_b) {
+                          if (($defectlist > 0) && ($defectlist >= $opt_b)) {
                             push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
                             escalate_status('WARNING');
                             warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
                           }
-                          elsif ($defectlist < $opt_b) {
-                            push(@error_messages, "$defectlist Elements in grown defect list (but less than threshold $opt_b)");
+                          elsif (($defectlist > 0) && ($defectlist < $opt_b)) {
+                            push(@error_messages, "Note: $defectlist Elements in grown defect list");
                             warn "(debug) Elements in grown defect list is non-zero ($defectlist) but less than $opt_b\n\n" if $opt_debug;
                           }
                         }
                         else {
-                          push (@perfdata, "defect_list=$defectlist");
-                          push(@error_messages, "$defectlist Elements in grown defect list");
-                          escalate_status('WARNING');
-                          warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+                          if ($defectlist > 0) {
+                            push (@perfdata, "defect_list=$defectlist");
+                            push(@error_messages, "$defectlist Elements in grown defect list");
+                            escalate_status('WARNING');
+                            warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+                          }
                         }
                 }
                 elsif ($line =~ /Blocks sent to initiator =\s+(\d+)/){
@@ -324,7 +327,7 @@ if($exit_status ne 'OK'){
         $status_string = "$exit_status: ".join(', ', @error_messages);
 }
 else {
-        $status_string = "$exit_status: ".join(', ', @error_messages);
+        $status_string = "OK: no SMART errors detected. ".join(', ', @error_messages);
 }
 
 print "$status_string|$perf_string\n";

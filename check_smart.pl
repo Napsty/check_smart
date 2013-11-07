@@ -87,7 +87,7 @@ else{
         exit $ERRORS{'UNKNOWN'};
 }
 
-my $smart_command = 'smartctl';
+my $smart_command = 'sudo smartctl';
 my @error_messages = qw//;
 my $exit_status = 'OK';
 

@@ -9,6 +9,15 @@ Therefore disks attached to hardware raids like megaraid could not be checked.
 
 I modified the plugin so it also works with disks attached to raid controllers... and added other features.
 
+Warning for CCISS RAID and FreeBSD
+-------------------------
+Today, November 8th 2013, I got aware that after having replaced cciss,0 (first physical disk) on a ProLiant DL380 G5 
+running with FreeBSD 9.1-p4, the SMART values of cciss,0 didn't change. To my big surprise the SMART values of cciss,1 were
+different after the disk replacement. This means that the SmartArray controller does not label the disks seen 
+by FreeBSD correctly (or FreeBSD makes a wrong tanslation). So be extra careful when using FreeBSD!
+
+I could "resolve" this by verifying the disk's serial number printed on the physical disk and the SMART output.
+
 History
 -------------------------
 * Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)

@@ -16,7 +16,8 @@ running with FreeBSD 9.1-p4, the SMART values of cciss,0 didn't change. To my bi
 different after the disk replacement. This means that the SmartArray controller does not label the disks seen 
 by FreeBSD correctly (or FreeBSD makes a wrong tanslation). So be extra careful when using FreeBSD!
 
-I could "resolve" this by verifying the disk's serial number printed on the physical disk and the SMART output.
+I could "resolve" this by using the command 'cciss_vol_status'. 
+See http://www.claudiokuenzler.com/blog/413/freebsd-cciss-hp-smart-array-raid-wrong-disk-numbering-labeling for details.
 
 History
 -------------------------

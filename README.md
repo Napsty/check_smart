@@ -77,5 +77,11 @@ Using threshold option (-b) to ignore 1 bad element, warning only when 2 bad ele
 
     /usr/local/libexec/nagios/check_smart.pl -d /dev/ciss0 -i cciss,1 -b 2
     OK: 1 Elements in grown defect list (but less than threshold 2)|defect_list=1;2;2;; sent_blocks=2769458900762624 temperature=27;;65
+    
+SCSI drives behind HP RAID (CCISS) on Linux (Ubuntu hardy):
+
+    /usr/lib/nagios/plugins/check_smart.pl -d /dev/cciss/c0d0 -i cciss,0        
+    OK: no SMART errors detected. |
+
 
     

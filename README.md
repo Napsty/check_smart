@@ -33,6 +33,7 @@ History
 * Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
 * Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
 * Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
+* Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
 
 
 Sudoers entry

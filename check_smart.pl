@@ -16,6 +16,7 @@
 # Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
 # Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
 # Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
+# Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
 
 use strict;
 use Getopt::Long;
@@ -23,7 +24,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 4.1 $';
+my $revision = '$Revision: 4.2 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -261,7 +262,7 @@ else{
                         my $defectlist = $1;
                         # check for elements in grown defect list
                         if ($opt_b) {
-                          push (@perfdata, "defect_list=$defectlist;$opt_b;$opt_b;;");
+                          push (@perfdata, "defect_list=$defectlist;;$opt_b");
                           if (($defectlist > 0) && ($defectlist >= $opt_b)) {
                             push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
                             escalate_status('WARNING');

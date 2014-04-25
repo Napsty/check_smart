@@ -34,6 +34,8 @@ History
 * Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
 * Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
 * Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
+* Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
+* Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
 
 
 Sudoers entry
@@ -85,6 +87,16 @@ SCSI drives behind HP RAID (CCISS) on Linux (Ubuntu hardy):
 
     /usr/lib/nagios/plugins/check_smart.pl -d /dev/cciss/c0d0 -i cciss,0        
     OK: no SMART errors detected. |
+
+Check all SATA disks at the same time on Linux:
+
+    /usr/lib/nagios/plugins/check_smart.pl -g /dev/sd -i ata        
+    OK: [/dev/sda] - Device is clean --- [/dev/sdb] - Device is clean|
+    
+Check all SCSI disks behind Intel RAID FreeBSD 9.2 ("kldload mfip.ko" required):
+
+    /usr/lib/nagios/plugins/check_smart.pl -g /dev/pass -i scsi
+    OK: [/dev/pass0] - Device is clean --- [/dev/pass1] - Device is clean --- [/dev/pass2] - Device is clean --- [/dev/pass3] - Device is clean --- [/dev/pass4] - Device is clean --- [/dev/pass5] - Device is clean --- [/dev/pass6] - Device is clean --- [/dev/pass7] - Device is clean --- [/dev/pass8] - Device is clean --- [/dev/pass9] - Device is clean | 
 
 
     

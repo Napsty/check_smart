@@ -418,5 +418,6 @@ sub escalate_status {
                 return if $exit_status eq 'WARNING';
                 return if $exit_status eq 'CRITICAL';
         }
+        $exit_status_local = $requested_status;
         $exit_status = $requested_status;
 }

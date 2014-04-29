@@ -363,7 +363,7 @@ foreach $device ( split(":",$device) ){
     
     warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
-    if($exit_status ne 'OK'){
+    if($exit_status_local ne 'OK'){
       if ($opt_g) {
         $status_string_local = $label.join(', ', @error_messages);
         $status_string .= $status_string_local.$Terminator;
@@ -381,6 +381,7 @@ foreach $device ( split(":",$device) ){
         $status_string = "no SMART errors detected. ".join(', ', @error_messages);
       }
     }
+
 
 }
 

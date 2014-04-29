@@ -114,6 +114,7 @@ if ($device eq "") {
 
 my $smart_command = 'sudo smartctl';
 my $exit_status = 'OK';
+my $exit_status_local = 'OK';
 my $status_string = '';
 my $perf_string = '';
 my $Terminator=' --- ';
@@ -122,7 +123,7 @@ my $Terminator=' --- ';
 foreach $device ( split(":",$device) ){
     my @error_messages = qw//;
     my($status_string_local)='';
-    my($exit_status_local)='OK';
+    #my($exit_status_local)='OK';
     my($tag,$label);
 
     if ($opt_g){

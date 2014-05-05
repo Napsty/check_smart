@@ -36,7 +36,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_v);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_s $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"       => \$opt_debug,
@@ -45,6 +45,7 @@ GetOptions(
         "g=s" => \$opt_g, "global=s"    => \$opt_g,
         "h"   => \$opt_h, "help"        => \$opt_h,
         "i=s" => \$opt_i, "interface=s" => \$opt_i,
+        "s=s" => \$opt_s, "separator=s"=>  \$opt_s,
         "v"   => \$opt_v, "version"     => \$opt_v,
 );
 
@@ -113,17 +114,23 @@ if ($device eq "") {
 
 
 my $smart_command = 'sudo smartctl';
-my $exit_status = '';
-my($exit_status_local)='OK';
-my $status_string = '';
 my $perf_string = '';
-my $Terminator=' --- ';
+my $Separator   = (defined($opt_s)?$opt_s:' --- ');
+my $exit_status = 'OK';
+my $exit_status_local ;
+my $status_string = '';
 
+# do not allow some perl pattern sign to be used as separators
+$Separator = ' --- ' if ( $Separator =~ m/\+/ );
+$Separator = ' --- ' if ( $Separator =~ m/\*/);
 
 foreach $device ( split(":",$device) ){
     my @error_messages = qw//;
     my($status_string_local)='';
     my($tag,$label);
+
+    # always start with an OK status for new devices in case of -g
+    $exit_status_local = 'OK';
 
     if ($opt_g){
         # we had a pattern based on $opt_g
@@ -255,7 +262,7 @@ foreach $device ( split(":",$device) ){
             my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
             if ($when_failed ne '-'){
                 push(@error_messages, "Attribute $attribute_name failed at $when_failed");
-                escalate_status('WARNING');
+                escalate_status('WARNING'); 
                 warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
             }
             # some attributes produce questionable data; no need to graph them
@@ -269,7 +276,7 @@ foreach $device ( split(":",$device) ){
                 if ($opt_b) {
                     if (($raw_value > 0) && ($raw_value >= $opt_b)) {
                         push(@error_messages, "$raw_value Sectors pending re-allocation");
-                        escalate_status('WARNING');
+                        escalate_status('WARNING'); 
                         warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
                     }
                     elsif (($raw_value > 0) && ($raw_value < $opt_b)) {
@@ -362,31 +369,27 @@ foreach $device ( split(":",$device) ){
     warn "###########################################################\n\n\n" if $opt_debug;
     
     if($exit_status_local ne 'OK'){
+	if ($opt_g) {
+	    $status_string_local = $label.join(', ', @error_messages);
+	    $status_string .= $status_string_local.$Separator;
+	} else {
+	    $status_string = join(', ', @error_messages);
+	}
+
+    } else {
       if ($opt_g) {
-        $status_string_local = $label.join(', ', @error_messages);
-        $status_string .= $status_string_local.$Terminator;
+	  $status_string_local = $label."Device is clean";
+	  $status_string .= $status_string_local.$Separator;
+      } else {
+	  $status_string = "no SMART errors detected. ".join(', ', @error_messages);
       }
-      else {
-        $status_string = join(', ', @error_messages);
-      }
-      $exit_status = '$exit_status_local';
-    } 
-    else {
-      if ($opt_g) {
-        $status_string_local = $label."Device is clean";
-        $status_string .= $status_string_local.$Terminator;
-      }
-      else {
-        $status_string = "no SMART errors detected. ".join(', ', @error_messages);
-      }
-      $exit_status = "$exit_status_local";
     }
 
 }
 
-    warn "(debug) final status/output: $exit_status\n" if $opt_debug;
+warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
-$status_string =~ s/$Terminator$//;
+$status_string =~ s/$Separator$//;
 print "$exit_status: $status_string|$perf_string\n";
 exit $ERRORS{$exit_status};
 
@@ -402,6 +405,7 @@ sub print_help {
         print "\n";
         print "Other options\n";
         print "  -i/--interface: device's interface type\n";
+	print "  -s/--separator: used with -g to separate device results\n";
         print "  (See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
         print "  -h/--help: this help\n";
@@ -411,15 +415,21 @@ sub print_help {
 
 # escalate an exit status IFF it's more severe than the previous exit status
 sub escalate_status {
-        my $requested_status = shift;
-        # no test for 'CRITICAL'; automatically escalates upwards
-        if ($requested_status eq 'WARNING') {
-                return if $exit_status eq 'CRITICAL';
-        }
-        if ($requested_status eq 'UNKNOWN') {
-                return if $exit_status eq 'WARNING';
-                return if $exit_status eq 'CRITICAL';
-        }
-        $exit_status = $requested_status;
-        $exit_status_local = $requested_status;
+    my($requested_status)     = @_;
+    my($init_gsts,$init_lsts) = (1,1);
+
+    # no test for 'CRITICAL'; automatically escalates upwards
+    if ($requested_status eq 'WARNING') {
+	$init_gsts=0 if $exit_status       eq 'CRITICAL';
+	$init_lsts=0 if $exit_status_local eq 'CRITICAL';
+    }
+    if ($requested_status eq 'UNKNOWN') {
+	$init_gsts=0 if $exit_status       eq 'WARNING';
+	$init_lsts=0 if $exit_status_local eq 'WARNING';
+
+	$init_gsts=0 if $exit_status       eq 'CRITICAL';
+	$init_lsts=0 if $exit_status_local eq 'CRITICAL';
+    }
+    $exit_status       = $requested_status if $init_gsts;
+    $exit_status_local = $requested_status if $init_lsts;
 }

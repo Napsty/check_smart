@@ -19,6 +19,7 @@
 # Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
 # Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
 # Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
+# May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
 
 use strict;
 use Getopt::Long;
@@ -26,7 +27,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.1 $';
+my $revision = '$Revision: 5.2 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -114,16 +115,17 @@ if ($device eq "") {
 
 my $smart_command = 'sudo smartctl';
 my $exit_status = 'OK';
+my $exit_status_local = 'OK';
 my $status_string = '';
 my $perf_string = '';
-my $Terminator=' --- ';
+my $Terminator = ' --- ';
 
 
 foreach $device ( split(":",$device) ){
     my @error_messages = qw//;
     my($status_string_local)='';
-    my($exit_status_local)='OK';
     my($tag,$label);
+    $exit_status_local = 'OK';
 
     if ($opt_g){
         # we had a pattern based on $opt_g
@@ -358,12 +360,10 @@ foreach $device ( split(":",$device) ){
     $perf_string = join(' ', @perfdata);
     
     warn "###########################################################\n" if $opt_debug;
-    warn "(debug) FINAL STATUS: $exit_status_local\n" if $opt_debug;
+    warn "(debug) LOCAL STATUS: $exit_status_local, FINAL STATUS: $exit_status\n" if $opt_debug;
     warn "###########################################################\n\n\n" if $opt_debug;
     
-    warn "(debug) final status/output:\n" if $opt_debug;
-
-    if($exit_status ne 'OK'){
+    if($exit_status_local ne 'OK'){
       if ($opt_g) {
         $status_string_local = $label.join(', ', @error_messages);
         $status_string .= $status_string_local.$Terminator;
@@ -383,6 +383,8 @@ foreach $device ( split(":",$device) ){
     }
 
 }
+
+    warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
 $status_string =~ s/$Terminator$//;
 print "$exit_status: $status_string|$perf_string\n";
@@ -412,11 +414,12 @@ sub escalate_status {
         my $requested_status = shift;
         # no test for 'CRITICAL'; automatically escalates upwards
         if ($requested_status eq 'WARNING') {
-                return if $exit_status eq 'CRITICAL';
+                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
         }
         if ($requested_status eq 'UNKNOWN') {
-                return if $exit_status eq 'WARNING';
-                return if $exit_status eq 'CRITICAL';
+                return if ($exit_status|$exit_status_local) eq 'WARNING';
+                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
         }
         $exit_status = $requested_status;
+        $exit_status_local = $requested_status;
 }

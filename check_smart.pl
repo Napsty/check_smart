@@ -120,10 +120,6 @@ my $exit_status = 'OK';
 my $exit_status_local ;
 my $status_string = '';
 
-# do not allow some perl pattern sign to be used as separators
-$Separator = ' --- ' if ( $Separator =~ m/\+/ );
-$Separator = ' --- ' if ( $Separator =~ m/\*/);
-
 foreach $device ( split(":",$device) ){
     my @error_messages = qw//;
     my($status_string_local)='';
@@ -389,7 +385,10 @@ foreach $device ( split(":",$device) ){
 
 warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
-$status_string =~ s/$Separator$//;
+if ( $opt_g && $status_string ne ''){
+    $status_string = substr($status_string,0,length($status_string)-length($Separator)) ;
+}
+
 print "$exit_status: $status_string|$perf_string\n";
 exit $ERRORS{$exit_status};
 

@@ -113,8 +113,8 @@ if ($device eq "") {
 
 
 my $smart_command = 'sudo smartctl';
-my $exit_status = 'OK';
-my $exit_status_local = 'OK';
+my $exit_status = '';
+my($exit_status_local)='OK';
 my $status_string = '';
 my $perf_string = '';
 my $Terminator=' --- ';
@@ -123,7 +123,6 @@ my $Terminator=' --- ';
 foreach $device ( split(":",$device) ){
     my @error_messages = qw//;
     my($status_string_local)='';
-    #my($exit_status_local)='OK';
     my($tag,$label);
 
     if ($opt_g){
@@ -359,11 +358,9 @@ foreach $device ( split(":",$device) ){
     $perf_string = join(' ', @perfdata);
     
     warn "###########################################################\n" if $opt_debug;
-    warn "(debug) FINAL STATUS: $exit_status_local\n" if $opt_debug;
+    warn "(debug) LOCAL STATUS: $exit_status_local\n" if $opt_debug;
     warn "###########################################################\n\n\n" if $opt_debug;
     
-    warn "(debug) final status/output: $exit_status\n" if $opt_debug;
-
     if($exit_status_local ne 'OK'){
       if ($opt_g) {
         $status_string_local = $label.join(', ', @error_messages);
@@ -372,6 +369,7 @@ foreach $device ( split(":",$device) ){
       else {
         $status_string = join(', ', @error_messages);
       }
+      $exit_status = '$exit_status_local';
     } 
     else {
       if ($opt_g) {
@@ -381,10 +379,12 @@ foreach $device ( split(":",$device) ){
       else {
         $status_string = "no SMART errors detected. ".join(', ', @error_messages);
       }
+      $exit_status = "$exit_status_local";
     }
 
-
 }
+
+    warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
 $status_string =~ s/$Terminator$//;
 print "$exit_status: $status_string|$perf_string\n";
@@ -420,6 +420,6 @@ sub escalate_status {
                 return if $exit_status eq 'WARNING';
                 return if $exit_status eq 'CRITICAL';
         }
+        $exit_status = $requested_status;
         $exit_status_local = $requested_status;
-	# $exit_status = $requested_status;
 }

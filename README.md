@@ -36,6 +36,8 @@ History
 * Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
 * Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
 * Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
+* May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
+* Aug 19, 2014: Josh Behrends - Can now run script outside of nagios plugins dir (rev 5.3)
 
 
 Sudoers entry

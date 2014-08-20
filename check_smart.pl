@@ -100,7 +100,7 @@ if ($opt_d || $opt_g ) {
 
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto)/) {
                 $interface = $opt_i;
         } else {
                 print "invalid interface $opt_i for $opt_d!\n\n";
@@ -397,7 +397,7 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N|auto) [-b N] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";

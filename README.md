@@ -39,7 +39,7 @@ History
 * May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
 * Aug 19, 2014: Josh Behrends - Can now run script outside of nagios plugins dir (rev 5.3)
 * Aug 20, 2014: Josh Behrends - Added support for 'auto' interface type. Updated wiki url. (rev 5.4)
-
+* Jan 30, 2015: Josh Behrends - Updated -g to pattern match vs glob match "?" only. (rev 5.5)
 
 Sudoers entry
 -------------------------
@@ -93,12 +93,17 @@ SCSI drives behind HP RAID (CCISS) on Linux (Ubuntu hardy):
 
 Check all SATA disks at the same time on Linux:
 
-    /usr/lib/nagios/plugins/check_smart.pl -g /dev/sd -i ata        
+    /usr/lib/nagios/plugins/check_smart.pl -g '/dev/sd?' -i ata        
     OK: [/dev/sda] - Device is clean --- [/dev/sdb] - Device is clean|
+
+Check specific disks vs all disks at one time:
+    If we only want to check sda,sdb,sdc, AND sdg
+    /usr/lib/nagios/plugins/check_smart.pl -g '/dev/sd[a-cg-g]' -i sat
+    OK: [/dev/sda] - Device is clean --- [/dev/sdb] - Device is clean --- [/dev/sdc] - Device is clean --- [/dev/sdg] - Device is clean|
     
 Check all SCSI disks behind Intel RAID on FreeBSD 9.2 ("kldload mfip.ko" required):
 
-    /usr/local/libexec/nagios/plugins/check_smart.pl -g /dev/pass -i scsi
+    /usr/local/libexec/nagios/plugins/check_smart.pl -g '/dev/pass?' -i scsi
     OK: [/dev/pass0] - Device is clean --- [/dev/pass1] - Device is clean --- [/dev/pass2] - Device is clean --- [/dev/pass3] - Device is clean --- [/dev/pass4] - Device is clean --- [/dev/pass5] - Device is clean --- [/dev/pass6] - Device is clean --- [/dev/pass7] - Device is clean --- [/dev/pass8] - Device is clean --- [/dev/pass9] - Device is clean | 
 
 

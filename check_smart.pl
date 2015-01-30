@@ -20,6 +20,9 @@
 # Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
 # Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
 # May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
+# Aug 19, 2014: Josh Behrends - Can now run script outside of nagios plugins dir (rev 5.3)
+# Aug 20, 2014: Josh Behrends - Added support for 'auto' interface type. Updated wiki url. (rev 5.4)
+# Jan 30, 2015: Josh Behrends - Updated -g to pattern match vs glob match "?" only. (rev 5.5)
 
 use strict;
 use Getopt::Long;
@@ -27,10 +30,13 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.2 $';
+my $revision = '$Revision: 5.5 $';
 
 use FindBin;
 use lib $FindBin::Bin;
+BEGIN {
+  push @INC,'/usr/lib/nagios/plugins','/usr/lib64/nagios/plugins';
+}
 use utils qw(%ERRORS &print_revision &support &usage);
 
 $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
@@ -74,8 +80,8 @@ if ($opt_d || $opt_g ) {
             # normal mode - push opt_d on the list of devices
             push(@dev,$opt_d);
         } else {
-            # glob all devices - try '?' first 
-            @dev =glob($opt_g."?");
+            # pattern match devices 
+            @dev =glob($opt_g);
         }
 
         foreach my $opt_dl (@dev){
@@ -95,8 +101,8 @@ if ($opt_d || $opt_g ) {
         }
 
         # Allow all device types currently supported by smartctl
-        # See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
+        # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto)/) {
                 $interface = $opt_i;
         } else {
                 print "invalid interface $opt_i for $opt_d!\n\n";
@@ -393,16 +399,17 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N|auto) [-b N] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
-        print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
-        print "               Example: /dev/sd will search for all /dev/sd* devices and report errors globally.\n";
+        print "  -g/--global: pattern match physical devices to be SMART monitored\n";
+        print "               Example: -g '/dev/sd?' will search for all /dev/sd* devices and report errors globally.\n";
+        print "               Example: /dev/sd[a-c] will match sda,sdb,sdc | /dev/sd[a-be-f] will match sda to sdb and sde to sdf\n";
         print "Note that -g only works with a fixed interface input (e.g. scsi, ata), not with special interface ids like cciss,1\n";
         print "\n";
         print "Other options\n";
         print "  -i/--interface: device's interface type\n";
-        print "  (See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers for interface convention)\n";
+        print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

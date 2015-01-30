@@ -22,6 +22,7 @@
 # May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
 # Aug 19, 2014: Josh Behrends - Can now run script outside of nagios plugins dir (rev 5.3)
 # Aug 20, 2014: Josh Behrends - Added support for 'auto' interface type. Updated wiki url. (rev 5.4)
+# Jan 30, 2015: Josh Behrends - Updated -g to pattern match vs glob match "?" only. (rev 5.5)
 
 use strict;
 use Getopt::Long;
@@ -29,7 +30,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.4 $';
+my $revision = '$Revision: 5.5 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -79,8 +80,8 @@ if ($opt_d || $opt_g ) {
             # normal mode - push opt_d on the list of devices
             push(@dev,$opt_d);
         } else {
-            # glob all devices - try '?' first 
-            @dev =glob($opt_g."?");
+            # pattern match devices 
+            @dev =glob($opt_g);
         }
 
         foreach my $opt_dl (@dev){
@@ -401,8 +402,9 @@ sub print_help {
         print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N|auto) [-b N] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
-        print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
-        print "               Example: /dev/sd will search for all /dev/sd* devices and report errors globally.\n";
+        print "  -g/--global: pattern match physical devices to be SMART monitored\n";
+        print "               Example: -g '/dev/sd?' will search for all /dev/sd* devices and report errors globally.\n";
+        print "               Example: /dev/sd[a-c] will match sda,sdb,sdc | /dev/sd[a-be-f] will match sda to sdb and sde to sdf\n";
         print "Note that -g only works with a fixed interface input (e.g. scsi, ata), not with special interface ids like cciss,1\n";
         print "\n";
         print "Other options\n";

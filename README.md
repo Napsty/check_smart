@@ -38,6 +38,7 @@ History
 * Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
 * May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
 * Feb 4, 2015: Caspar Smit and cguadall - Allow detection of more than 26 devices / issue #5 (rev 5.3)
+* Feb 4, 2015: Josh Behrends - allow script to run outside of nagios plugins dir / wiki url update  (rev 5.4)
 
 
 

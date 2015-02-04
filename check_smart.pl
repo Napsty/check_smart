@@ -100,7 +100,7 @@ if ($opt_d || $opt_g ) {
         }
 
         # Allow all device types currently supported by smartctl
-        # See http://sourceforge.net/apps/trac/smartmontools/wiki/Supported_RAID-Controllers
+        # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
         if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
                 $interface = $opt_i;
         } else {

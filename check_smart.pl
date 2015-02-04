@@ -149,25 +149,38 @@ foreach $device ( split(":",$device) ){
     my @output = `$full_command`;
     warn "(debug) output:\n@output\n\n" if $opt_debug;
 
+    my $output_mode = "";
     # parse ata output, looking for "health status: passed"
     my $found_status = 0;
-    my $line_str = 'SMART overall-health self-assessment test result: '; # ATA SMART line
-    my $ok_str = 'PASSED'; # ATA SMART OK string
+    my $line_str_ata = 'SMART overall-health self-assessment test result: '; # ATA SMART line
+    my $ok_str_ata = 'PASSED'; # ATA SMART OK string
 
-    if ($interface =~ m/(scsi|cciss)/){
-        $line_str = 'SMART Health Status: '; # SCSI and CCISS SMART line
-        $ok_str = 'OK'; #SCSI and CCISS SMART OK string
-    }
+    my $line_str_scsi = 'SMART Health Status: '; # SCSI and CCISS SMART line
+    my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
 
     foreach my $line (@output){
-        if($line =~ /$line_str(.+)/){
+        if($line =~ /$line_str_scsi(.+)/){
             $found_status = 1;
+            $output_mode = "scsi";
             warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-            if ($1 eq $ok_str) {
-                warn "(debug) found string '$ok_str'; status OK\n\n" if $opt_debug;
+            if ($1 eq $ok_str_scsi) {
+                warn "(debug) found string '$ok_str_scsi'; status OK\n\n" if $opt_debug;
             }
             else {
-                warn "(debug) no '$ok_str' status; failing\n\n" if $opt_debug;
+                warn "(debug) no '$ok_str_scsi' status; failing\n\n" if $opt_debug;
+                push(@error_messages, "Health status: $1");
+                escalate_status('CRITICAL');
+            }
+        }
+        if($line =~ /$line_str_ata(.+)/){
+            $found_status = 1;
+            $output_mode = "ata";
+            warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+            if ($1 eq $ok_str_ata) {
+                warn "(debug) found string '$ok_str_ata'; status OK\n\n" if $opt_debug;
+            }
+            else {
+                warn "(debug) no '$ok_str_ata' status; failing\n\n" if $opt_debug;
                 push(@error_messages, "Health status: $1");
                 escalate_status('CRITICAL');
             }
@@ -249,7 +262,7 @@ foreach $device ( split(":",$device) ){
 
     # separate metric-gathering and output analysis for ATA vs SCSI SMART output
     # Yeah - but megaraid is the same output as ata
-    if ($interface =~ m/(ata|megaraid|sat)/) {
+    if ($output_mode =~ "ata") {
         foreach my $line(@output){
             # get lines that look like this:
             #    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m

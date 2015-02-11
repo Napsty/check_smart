@@ -23,24 +23,25 @@ See http://www.claudiokuenzler.com/blog/413/freebsd-cciss-hp-smart-array-raid-wr
 
 History
 -------------------------
-* Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
-* Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
-* Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
-* Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
-* Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
-* Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
-* Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
-* Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
-* Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
-* Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
-* Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
-* Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
-* Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
-* May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
-* Feb 4, 2015: Caspar Smit and cguadall - Allow detection of more than 26 devices / issue #5 (rev 5.3)
-* Feb 5, 2015: Bastian de Groot - Different ATA vs. SCSI lookup (rev 5.4)
-* Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
-* Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
+
+    Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
+    Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
+    Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
+    Oct 11, 2013: Claudio Kuenzler - making the plugin work on FreeBSD (rev 3.0)
+    Oct 11, 2013: Claudio Kuenzler - allowing -i sat (SATA on FreeBSD) (rev 3.1)
+    Nov 4, 2013: Claudio Kuenzler - works now with CCISS on FreeBSD (rev 3.2)
+    Nov 4, 2013: Claudio Kuenzler - elements in grown defect list causes warning (rev 3.3)
+    Nov 6, 2013: Claudio Kuenzler - add threshold option "bad" (-b) (rev 4.0)
+    Nov 7, 2013: Claudio Kuenzler - modified help (rev 4.0)
+    Nov 7, 2013: Claudio Kuenzler - bugfix in threshold logic (rev 4.1)
+    Mar 19, 2014: Claudio Kuenzler - bugfix in defect list perfdata (rev 4.2)
+    Apr 22, 2014: Jerome Lauret - implemented -g to do a global lookup (rev 5.0)
+    Apr 25, 2014: Claudio Kuenzler - cleanup, merge Jeromes code, perfdata output fix (rev 5.1)
+    May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
+    Feb 4, 2015: Caspar Smit and cguadall - Allow detection of more than 26 devices / issue #5 (rev 5.3)
+    Feb 5, 2015: Bastian de Groot - Different ATA vs. SCSI lookup (rev 5.4)
+    Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
+    Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
 
 
 

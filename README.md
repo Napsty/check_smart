@@ -39,6 +39,8 @@ History
 * May 5, 2014: Caspar Smit - Fixed output bug in global check / issue #3 (rev 5.2)
 * Feb 4, 2015: Caspar Smit and cguadall - Allow detection of more than 26 devices / issue #5 (rev 5.3)
 * Feb 5, 2015: Bastian de Groot - Different ATA vs. SCSI lookup (rev 5.4)
+* Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
+* Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
 
 
 
@@ -53,8 +55,9 @@ You have two options
 
 Entry in sudoers (of course adapt your paths if necessary):
 
-    nagios          ALL = NOPASSWD: /usr/lib/nagios/plugins/check_smart.pl    # for option 1
-    nagios          ALL = NOPASSWD: /usr/local/sbin/smartctl                  # for option 2
+    nagios   ALL = NOPASSWD: /usr/lib/nagios/plugins/check_smart.pl    # for option 1
+    nagios   ALL = NOPASSWD: /usr/local/sbin/smartctl                  # for option 2
+
 
 Successful tests/examples
 -------------------------

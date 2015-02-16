@@ -103,7 +103,7 @@ Check all SATA disks at the same time on Linux:
     
 Check all SCSI disks behind Intel RAID on FreeBSD 9.2 ("kldload mfip.ko" required):
 
-    /usr/local/libexec/nagios/plugins/check_smart.pl -g /dev/pass -i scsi
+    /usr/local/libexec/nagios/check_smart.pl -g /dev/pass -i scsi
     OK: [/dev/pass0] - Device is clean --- [/dev/pass1] - Device is clean --- [/dev/pass2] - Device is clean --- [/dev/pass3] - Device is clean --- [/dev/pass4] - Device is clean --- [/dev/pass5] - Device is clean --- [/dev/pass6] - Device is clean --- [/dev/pass7] - Device is clean --- [/dev/pass8] - Device is clean --- [/dev/pass9] - Device is clean | 
 
 Single SCSI drive on FreeBSD 10.1:

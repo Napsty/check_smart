@@ -42,7 +42,7 @@ History
     Feb 5, 2015: Bastian de Groot - Different ATA vs. SCSI lookup (rev 5.4)
     Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
     Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
-    Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now giving in input) (rev 5.6)
+    Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now awaited from input) (rev 5.6)
 
 
 

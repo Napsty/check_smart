@@ -42,6 +42,7 @@ History
     Feb 5, 2015: Bastian de Groot - Different ATA vs. SCSI lookup (rev 5.4)
     Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
     Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
+    Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now giving in input) (rev 5.6)
 
 
 
@@ -96,14 +97,14 @@ SCSI drives behind HP RAID (CCISS) on Linux (Ubuntu hardy):
     /usr/lib/nagios/plugins/check_smart.pl -d /dev/cciss/c0d0 -i cciss,0        
     OK: no SMART errors detected. |
 
-Check all SATA disks at the same time on Linux:
+Check all SATA disks (sda - sdz) at the same time on Linux:
 
-    /usr/lib/nagios/plugins/check_smart.pl -g /dev/sd -i ata        
+    /usr/lib/nagios/plugins/check_smart.pl -g "/dev/sd[a-z]" -i ata        
     OK: [/dev/sda] - Device is clean --- [/dev/sdb] - Device is clean|
     
 Check all SCSI disks behind Intel RAID on FreeBSD 9.2 ("kldload mfip.ko" required):
 
-    /usr/local/libexec/nagios/check_smart.pl -g /dev/pass -i scsi
+    /usr/local/libexec/nagios/check_smart.pl -g /dev/pass[1-9] -i scsi
     OK: [/dev/pass0] - Device is clean --- [/dev/pass1] - Device is clean --- [/dev/pass2] - Device is clean --- [/dev/pass3] - Device is clean --- [/dev/pass4] - Device is clean --- [/dev/pass5] - Device is clean --- [/dev/pass6] - Device is clean --- [/dev/pass7] - Device is clean --- [/dev/pass8] - Device is clean --- [/dev/pass9] - Device is clean | 
 
 Single SCSI drive on FreeBSD 10.1:

@@ -70,8 +70,7 @@ if ($opt_h) {
 my ($device, $interface) = qw//;
 if ($opt_d || $opt_g ) {
         unless($opt_i){
-                print "must specify an interface for $opt_d using -i/--interface!\n\n";
-                print_help();
+                print "must specify an interface for $opt_d using -i/--interface!\n";
                 exit $ERRORS{'UNKNOWN'};
         }
 
@@ -107,16 +106,14 @@ if ($opt_d || $opt_g ) {
         if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
                 $interface = $opt_i;
         } else {
-                print "invalid interface $opt_i for $opt_d!\n\n";
-                print_help();
+                print "invalid interface $opt_i for $opt_d!\n";
                 exit $ERRORS{'UNKNOWN'};
         }
 }
 
 
 if ($device eq "") {
-    print "must specify a device!\n\n";
-    print_help();
+    print "must specify a device!\n";
     exit $ERRORS{'UNKNOWN'};
 }
 

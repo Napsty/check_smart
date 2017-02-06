@@ -25,6 +25,7 @@
 # Feb 11, 2015: Josh Behrends - Allow script to run outside of nagios plugins dir / wiki url update (rev 5.5)
 # Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
 # Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now awaited from input) (rev 5.6)
+# Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
 
 use strict;
 use Getopt::Long;

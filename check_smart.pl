@@ -114,7 +114,7 @@ if ($opt_d || $opt_g ) {
 }
 
 
-if ($device eq "") {
+if (!defined($device) || $device eq "") {
     print "must specify a device!\n\n";
     print_help();
     exit $ERRORS{'UNKNOWN'};

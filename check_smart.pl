@@ -33,7 +33,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.6 $';
+my $revision = '$Revision: 5.7 $';
 
 use FindBin;
 use lib $FindBin::Bin;

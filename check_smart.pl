@@ -2,7 +2,7 @@
 # Check SMART status of ATA/SCSI disks, returning any usable metrics as perfdata.
 # For usage information, run ./check_smart -h
 #
-# This script was created under contract for the US Government and is therefore Public Domain
+# This script was initially created under contract for the US Government and is therefore Public Domain
 #
 # Changes and Modifications
 # =========================
@@ -27,6 +27,8 @@
 # Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now awaited from input) (rev 5.6)
 # Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
 # Mar 22, 2017: Pavel Pulec (Inuits) - allow type "auto" (rev 5.8)
+# Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
+
 
 use strict;
 use Getopt::Long;
@@ -98,7 +100,7 @@ if ($opt_d || $opt_g ) {
             }
         }
 
-        if ( ! defined($device) ){
+        if (!defined($device) || $device eq "") {
             print "Could not find any valid block/character special device for ".
                   ($opt_d?"device $opt_d ":"pattern $opt_g")." !\n\n";
             exit $ERRORS{'UNKNOWN'};
@@ -106,8 +108,18 @@ if ($opt_d || $opt_g ) {
 
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
+
         if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto)/) {
-                $interface = $opt_i;
+            $interface = $opt_i;
+          if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "megaraid," . $k . ":";
+            }
+          }
+          else {
+            $interface .= ":";
+          }
         } else {
                 print "invalid interface $opt_i for $opt_d!\n\n";
                 print_help();
@@ -116,7 +128,7 @@ if ($opt_d || $opt_g ) {
 }
 
 
-if (!defined($device) || $device eq "") {
+if ($device eq "") {
     print "must specify a device!\n\n";
     print_help();
     exit $ERRORS{'UNKNOWN'};
@@ -132,279 +144,280 @@ my $Terminator = ' --- ';
 
 
 foreach $device ( split(":",$device) ){
-    my @error_messages = qw//;
-    my($status_string_local)='';
-    my($tag,$label);
-    $exit_status_local = 'OK';
+	foreach $interface ( split(":",$interface) ){
+		my @error_messages = qw//;
+		my($status_string_local)='';
+		my($tag,$label);
+		$exit_status_local = 'OK';
 
-    if ($opt_g){
-        # we had a pattern based on $opt_g
-        $tag   = $device;
-        $tag   =~ s/$opt_g//;
-        $label = "[$device] - ";
-    } else {
-        # we had a device specified using $opt_d (traditional)
-        $label = "";
-        $tag   = $device;
-    }
-
-
-    warn "###########################################################\n" if $opt_debug;
-    warn "(debug) CHECK 1: getting overall SMART health status for $tag \n" if $opt_debug;
-    warn "###########################################################\n\n\n" if $opt_debug;
-
-    my $full_command = "$smart_command -d $interface -H $device";
-    warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
-
-    my @output = `$full_command`;
-    warn "(debug) output:\n@output\n\n" if $opt_debug;
-
-    my $output_mode = "";
-    # parse ata output, looking for "health status: passed"
-    my $found_status = 0;
-    my $line_str_ata = 'SMART overall-health self-assessment test result: '; # ATA SMART line
-    my $ok_str_ata = 'PASSED'; # ATA SMART OK string
-
-    my $line_str_scsi = 'SMART Health Status: '; # SCSI and CCISS SMART line
-    my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
-
-    foreach my $line (@output){
-        if($line =~ /$line_str_scsi(.+)/){
-            $found_status = 1;
-            $output_mode = "scsi";
-            warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-            if ($1 eq $ok_str_scsi) {
-                warn "(debug) found string '$ok_str_scsi'; status OK\n\n" if $opt_debug;
-            }
-            else {
-                warn "(debug) no '$ok_str_scsi' status; failing\n\n" if $opt_debug;
-                push(@error_messages, "Health status: $1");
-                escalate_status('CRITICAL');
-            }
-        }
-        if($line =~ /$line_str_ata(.+)/){
-            $found_status = 1;
-            $output_mode = "ata";
-            warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-            if ($1 eq $ok_str_ata) {
-                warn "(debug) found string '$ok_str_ata'; status OK\n\n" if $opt_debug;
-            }
-            else {
-                warn "(debug) no '$ok_str_ata' status; failing\n\n" if $opt_debug;
-                push(@error_messages, "Health status: $1");
-                escalate_status('CRITICAL');
-            }
-        }
-    }
-
-    unless ($found_status) {
-        push(@error_messages, 'No health status line found');
-        escalate_status('UNKNOWN');
-    }
+		if ($opt_g){
+			# we had a pattern based on $opt_g
+			$tag   = $device;
+			$tag   =~ s/$opt_g//;
+			$label = "[$device] - ";
+		} else {
+			# we had a device specified using $opt_d (traditional)
+			$label = "";
+			$tag   = $device;
+		}
 
 
-    warn "###########################################################\n" if $opt_debug;
-    warn "(debug) CHECK 2: getting silent SMART health check\n" if $opt_debug;
-    warn "###########################################################\n\n\n" if $opt_debug;
+		warn "###########################################################\n" if $opt_debug;
+		warn "(debug) CHECK 1: getting overall SMART health status for $tag \n" if $opt_debug;
+		warn "###########################################################\n\n\n" if $opt_debug;
 
-    $full_command = "$smart_command -d $interface -q silent -A $device";
-    warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
+		my $full_command = "$smart_command -d $interface -H $device";
+		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
-    system($full_command);
-    my $return_code = $?;
-    warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
+		my @output = `$full_command`;
+		warn "(debug) output:\n@output\n\n" if $opt_debug;
 
-    if ($return_code & 0x01) {
-        push(@error_messages, 'Commandline parse failure');
-        escalate_status('UNKNOWN');
-    }
-    if ($return_code & 0x02) {
-        push(@error_messages, 'Device could not be opened');
-        escalate_status('UNKNOWN');
-    }
-    if ($return_code & 0x04) {
-        push(@error_messages, 'Checksum failure');
-        escalate_status('WARNING');
-    }
-    if ($return_code & 0x08) {
-        push(@error_messages, 'Disk is failing');
-        escalate_status('CRITICAL');
-    }
-    if ($return_code & 0x10) {
-        push(@error_messages, 'Disk is in prefail');
-        escalate_status('WARNING');
-    }
-    if ($return_code & 0x20) {
-        push(@error_messages, 'Disk may be close to failure');
-        escalate_status('WARNING');
-    }
-    if ($return_code & 0x40) {
-        push(@error_messages, 'Error log contains errors');
-        escalate_status('WARNING');
-    }
-    if ($return_code & 0x80) {
-        push(@error_messages, 'Self-test log contains errors');
-        escalate_status('WARNING');
-    }
-    if ($return_code && !$exit_status_local) {
-        push(@error_messages, 'Unknown return code');
-        escalate_status('CRITICAL');
-    }
+		my $output_mode = "";
+		# parse ata output, looking for "health status: passed"
+		my $found_status = 0;
+		my $line_str_ata = 'SMART overall-health self-assessment test result: '; # ATA SMART line
+		my $ok_str_ata = 'PASSED'; # ATA SMART OK string
 
-    if ($return_code) {
-        warn "(debug) non-zero exit code, generating error condition\n\n" if $opt_debug;
-    } else {
-        warn "(debug) zero exit code, status OK\n\n" if $opt_debug;
-    }
+		my $line_str_scsi = 'SMART Health Status: '; # SCSI and CCISS SMART line
+		my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
+
+		foreach my $line (@output){
+			if($line =~ /$line_str_scsi(.+)/){
+				$found_status = 1;
+				$output_mode = "scsi";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				if ($1 eq $ok_str_scsi) {
+					warn "(debug) found string '$ok_str_scsi'; status OK\n\n" if $opt_debug;
+				}
+				else {
+					warn "(debug) no '$ok_str_scsi' status; failing\n\n" if $opt_debug;
+					push(@error_messages, "Health status: $1");
+					escalate_status('CRITICAL');
+				}
+			}
+			if($line =~ /$line_str_ata(.+)/){
+				$found_status = 1;
+				$output_mode = "ata";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				if ($1 eq $ok_str_ata) {
+					warn "(debug) found string '$ok_str_ata'; status OK\n\n" if $opt_debug;
+				}
+				else {
+					warn "(debug) no '$ok_str_ata' status; failing\n\n" if $opt_debug;
+					push(@error_messages, "Health status: $1");
+					escalate_status('CRITICAL');
+				}
+			}
+		}
+
+		unless ($found_status) {
+			push(@error_messages, 'No health status line found');
+			escalate_status('UNKNOWN');
+		}
 
 
-    warn "###########################################################\n" if $opt_debug;
-    warn "(debug) CHECK 3: getting detailed statistics\n" if $opt_debug;
-    warn "(debug) information contains a few more potential trouble spots\n" if $opt_debug;
-    warn "(debug) plus, we can also use the information for perfdata/graphing\n" if $opt_debug;
-    warn "###########################################################\n\n\n" if $opt_debug;
+		warn "###########################################################\n" if $opt_debug;
+		warn "(debug) CHECK 2: getting silent SMART health check\n" if $opt_debug;
+		warn "###########################################################\n\n\n" if $opt_debug;
 
-    $full_command = "$smart_command -d $interface -A $device";
-    warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
-    @output = `$full_command`;
-    warn "(debug) output:\n@output\n\n" if $opt_debug;
-    my @perfdata = qw//;
+		$full_command = "$smart_command -d $interface -q silent -A $device";
+		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
-    # separate metric-gathering and output analysis for ATA vs SCSI SMART output
-    # Yeah - but megaraid is the same output as ata
-    if ($output_mode =~ "ata") {
-        foreach my $line(@output){
-            # get lines that look like this:
-            #    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m
-            next unless $line =~ /^\s*\d+\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
-            my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
-            if ($when_failed ne '-'){
-                push(@error_messages, "Attribute $attribute_name failed at $when_failed");
-                escalate_status('WARNING');
-                warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
-            }
-            # some attributes produce questionable data; no need to graph them
-            if (grep {$_ eq $attribute_name} ('Unknown_Attribute', 'Power_On_Minutes') ){
-                next;
-            }
-            push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+		system($full_command);
+		my $return_code = $?;
+		warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
-            # do some manual checks
-            if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
-                if ($opt_b) {
-                    if (($raw_value > 0) && ($raw_value >= $opt_b)) {
-                        push(@error_messages, "$raw_value Sectors pending re-allocation");
-                        escalate_status('WARNING');
-                        warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
-                    }
-                    elsif (($raw_value > 0) && ($raw_value < $opt_b)) {
-                        push(@error_messages, "$raw_value Sectors pending re-allocation (but less than threshold $opt_b)");
-                        warn "(debug) Current_Pending_Sector is non-zero ($raw_value) but less than $opt_b\n\n" if $opt_debug;
-                    }
-                } else {
-                    push(@error_messages, "Sectors pending re-allocation");
-                    escalate_status('WARNING');
-                    warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
-                }
-            }
-        }
+		if ($return_code & 0x01) {
+			push(@error_messages, 'Commandline parse failure');
+			escalate_status('UNKNOWN');
+		}
+		if ($return_code & 0x02) {
+			push(@error_messages, 'Device could not be opened');
+			escalate_status('UNKNOWN');
+		}
+		if ($return_code & 0x04) {
+			push(@error_messages, 'Checksum failure');
+			escalate_status('WARNING');
+		}
+		if ($return_code & 0x08) {
+			push(@error_messages, 'Disk is failing');
+			escalate_status('CRITICAL');
+		}
+		if ($return_code & 0x10) {
+			push(@error_messages, 'Disk is in prefail');
+			escalate_status('WARNING');
+		}
+		if ($return_code & 0x20) {
+			push(@error_messages, 'Disk may be close to failure');
+			escalate_status('WARNING');
+		}
+		if ($return_code & 0x40) {
+			push(@error_messages, 'Error log contains errors');
+			escalate_status('WARNING');
+		}
+		if ($return_code & 0x80) {
+			push(@error_messages, 'Self-test log contains errors');
+			escalate_status('WARNING');
+		}
+		if ($return_code && !$exit_status_local) {
+			push(@error_messages, 'Unknown return code');
+			escalate_status('CRITICAL');
+		}
 
-    } else {
-        my ($current_temperature, $max_temperature, $current_start_stop, $max_start_stop) = qw//;
-        foreach my $line(@output){
-            if ($line =~ /Current Drive Temperature:\s+(\d+)/){
-                $current_temperature = $1;
-            }
-            elsif ($line =~ /Drive Trip Temperature:\s+(\d+)/){
-                $max_temperature = $1;
-            }
-            elsif ($line =~ /Current start stop count:\s+(\d+)/){
-                $current_start_stop = $1;
-            }
-            elsif ($line =~ /Recommended maximum start stop count:\s+(\d+)/){
-                $max_start_stop = $1;
-            }
-            elsif ($line =~ /Elements in grown defect list:\s+(\d+)/){
-                my $defectlist = $1;
-                # check for elements in grown defect list
-                if ($opt_b) {
-                    push (@perfdata, "defect_list=$defectlist;;$opt_b") if $opt_d;
-                    if (($defectlist > 0) && ($defectlist >= $opt_b)) {
-                        push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
-                        escalate_status('WARNING');
-                        warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
-                    }
-                    elsif (($defectlist > 0) && ($defectlist < $opt_b)) {
-                        push(@error_messages, "Note: $defectlist Elements in grown defect list");
-                        warn "(debug) Elements in grown defect list is non-zero ($defectlist) but less than $opt_b\n\n" if $opt_debug;
-                    }
-                }
-                else {
-                    if ($defectlist > 0) {
-                        push (@perfdata, "defect_list=$defectlist") if $opt_d;
-                        push(@error_messages, "$defectlist Elements in grown defect list");
-                        escalate_status('WARNING');
-                        warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
-                    }
-                }
-            }
-            elsif ($line =~ /Blocks sent to initiator =\s+(\d+)/){
-                push (@perfdata, "sent_blocks=$1") if $opt_d;
-            }
-        }
-        if($current_temperature){
-            if($max_temperature){
-                push (@perfdata, "temperature=$current_temperature;;$max_temperature") if $opt_d;
-                if($current_temperature > $max_temperature){
-                    warn "(debug) Disk temperature is greater than max ($current_temperature > $max_temperature)\n\n" if $opt_debug;
-                    push(@error_messages, 'Disk temperature is higher than maximum');
-                    escalate_status('CRITICAL');
-                }
-            }
-            else{
-                push (@perfdata, "temperature=$current_temperature") if $opt_d;
-            }
-        }
-        if($current_start_stop){
-            if($max_start_stop){
-                push (@perfdata, "start_stop=$current_start_stop;$max_start_stop") if $opt_d;
-                if($current_start_stop > $max_start_stop){
-                    warn "(debug) Disk start_stop is greater than max ($current_start_stop > $max_start_stop)\n\n" if $opt_debug;
-                    push(@error_messages, 'Disk start_stop is higher than maximum');
-                    escalate_status('WARNING');
-                }
-            }
-            else{
-                push (@perfdata, "start_stop=$current_start_stop") if $opt_d;
-            }
-        }
-    }
-    warn "(debug) gathered perfdata:\n@perfdata\n\n" if $opt_debug;
-    $perf_string = join(' ', @perfdata);
-    
-    warn "###########################################################\n" if $opt_debug;
-    warn "(debug) LOCAL STATUS: $exit_status_local, FINAL STATUS: $exit_status\n" if $opt_debug;
-    warn "###########################################################\n\n\n" if $opt_debug;
-    
-    if($exit_status_local ne 'OK'){
-      if ($opt_g) {
-        $status_string_local = $label.join(', ', @error_messages);
-        $status_string .= $status_string_local.$Terminator;
-      }
-      else {
-        $status_string = join(', ', @error_messages);
-      }
-    } 
-    else {
-      if ($opt_g) {
-        $status_string_local = $label."Device is clean";
-        $status_string .= $status_string_local.$Terminator;
-      }
-      else {
-        $status_string = "no SMART errors detected. ".join(', ', @error_messages);
-      }
-    }
+		if ($return_code) {
+			warn "(debug) non-zero exit code, generating error condition\n\n" if $opt_debug;
+		} else {
+			warn "(debug) zero exit code, status OK\n\n" if $opt_debug;
+		}
 
+
+		warn "###########################################################\n" if $opt_debug;
+		warn "(debug) CHECK 3: getting detailed statistics\n" if $opt_debug;
+		warn "(debug) information contains a few more potential trouble spots\n" if $opt_debug;
+		warn "(debug) plus, we can also use the information for perfdata/graphing\n" if $opt_debug;
+		warn "###########################################################\n\n\n" if $opt_debug;
+
+		$full_command = "$smart_command -d $interface -A $device";
+		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
+		@output = `$full_command`;
+		warn "(debug) output:\n@output\n\n" if $opt_debug;
+		my @perfdata = qw//;
+
+		# separate metric-gathering and output analysis for ATA vs SCSI SMART output
+		# Yeah - but megaraid is the same output as ata
+		if ($output_mode =~ "ata") {
+			foreach my $line(@output){
+				# get lines that look like this:
+				#    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m
+				next unless $line =~ /^\s*\d+\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
+				my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
+				if ($when_failed ne '-'){
+					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
+					escalate_status('WARNING');
+					warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
+				}
+				# some attributes produce questionable data; no need to graph them
+				if (grep {$_ eq $attribute_name} ('Unknown_Attribute', 'Power_On_Minutes') ){
+					next;
+				}
+				push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+
+				# do some manual checks
+				if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
+					if ($opt_b) {
+						if (($raw_value > 0) && ($raw_value >= $opt_b)) {
+							push(@error_messages, "$raw_value Sectors pending re-allocation");
+							escalate_status('WARNING');
+							warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
+						}
+						elsif (($raw_value > 0) && ($raw_value < $opt_b)) {
+							push(@error_messages, "$raw_value Sectors pending re-allocation (but less than threshold $opt_b)");
+							warn "(debug) Current_Pending_Sector is non-zero ($raw_value) but less than $opt_b\n\n" if $opt_debug;
+						}
+					} else {
+						push(@error_messages, "Sectors pending re-allocation");
+						escalate_status('WARNING');
+						warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
+					}
+				}
+			}
+
+		} else {
+			my ($current_temperature, $max_temperature, $current_start_stop, $max_start_stop) = qw//;
+			foreach my $line(@output){
+				if ($line =~ /Current Drive Temperature:\s+(\d+)/){
+					$current_temperature = $1;
+				}
+				elsif ($line =~ /Drive Trip Temperature:\s+(\d+)/){
+					$max_temperature = $1;
+				}
+				elsif ($line =~ /Current start stop count:\s+(\d+)/){
+					$current_start_stop = $1;
+				}
+				elsif ($line =~ /Recommended maximum start stop count:\s+(\d+)/){
+					$max_start_stop = $1;
+				}
+				elsif ($line =~ /Elements in grown defect list:\s+(\d+)/){
+					my $defectlist = $1;
+					# check for elements in grown defect list
+					if ($opt_b) {
+						push (@perfdata, "defect_list=$defectlist;;$opt_b") if $opt_d;
+						if (($defectlist > 0) && ($defectlist >= $opt_b)) {
+							push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
+							escalate_status('WARNING');
+							warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+						}
+						elsif (($defectlist > 0) && ($defectlist < $opt_b)) {
+							push(@error_messages, "Note: $defectlist Elements in grown defect list");
+							warn "(debug) Elements in grown defect list is non-zero ($defectlist) but less than $opt_b\n\n" if $opt_debug;
+						}
+					}
+					else {
+						if ($defectlist > 0) {
+							push (@perfdata, "defect_list=$defectlist") if $opt_d;
+							push(@error_messages, "$defectlist Elements in grown defect list");
+							escalate_status('WARNING');
+							warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
+						}
+					}
+				}
+				elsif ($line =~ /Blocks sent to initiator =\s+(\d+)/){
+					push (@perfdata, "sent_blocks=$1") if $opt_d;
+				}
+			}
+			if($current_temperature){
+				if($max_temperature){
+					push (@perfdata, "temperature=$current_temperature;;$max_temperature") if $opt_d;
+					if($current_temperature > $max_temperature){
+						warn "(debug) Disk temperature is greater than max ($current_temperature > $max_temperature)\n\n" if $opt_debug;
+						push(@error_messages, 'Disk temperature is higher than maximum');
+						escalate_status('CRITICAL');
+					}
+				}
+				else{
+					push (@perfdata, "temperature=$current_temperature") if $opt_d;
+				}
+			}
+			if($current_start_stop){
+				if($max_start_stop){
+					push (@perfdata, "start_stop=$current_start_stop;$max_start_stop") if $opt_d;
+					if($current_start_stop > $max_start_stop){
+						warn "(debug) Disk start_stop is greater than max ($current_start_stop > $max_start_stop)\n\n" if $opt_debug;
+						push(@error_messages, 'Disk start_stop is higher than maximum');
+						escalate_status('WARNING');
+					}
+				}
+				else{
+					push (@perfdata, "start_stop=$current_start_stop") if $opt_d;
+				}
+			}
+		}
+		warn "(debug) gathered perfdata:\n@perfdata\n\n" if $opt_debug;
+		$perf_string = join(' ', @perfdata);
+		
+		warn "###########################################################\n" if $opt_debug;
+		warn "(debug) LOCAL STATUS: $exit_status_local, FINAL STATUS: $exit_status\n" if $opt_debug;
+		warn "###########################################################\n\n\n" if $opt_debug;
+		
+		if($exit_status_local ne 'OK'){
+		  if ($opt_g) {
+			$status_string_local = $label.join(', ', @error_messages);
+			$status_string .= $status_string_local.$Terminator;
+		  }
+		  else {
+			$status_string = join(', ', @error_messages);
+		  }
+		} 
+		else {
+		  if ($opt_g) {
+			$status_string_local = $label."Device is clean";
+			$status_string .= $status_string_local.$Terminator;
+		  }
+		  else {
+			$status_string = "no SMART errors detected. ".join(', ', @error_messages);
+		  }
+		}
+	}
 }
 
     warn "(debug) final status/output: $exit_status\n" if $opt_debug;

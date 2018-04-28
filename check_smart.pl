@@ -28,7 +28,7 @@
 # Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
 # Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
 # Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
-
+# Apr 28, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
 
 use strict;
 use Getopt::Long;
@@ -36,7 +36,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.9 $';
+my $revision = '$Revision: 5.10 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -49,7 +49,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_v);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_s $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"       => \$opt_debug,
@@ -58,6 +58,7 @@ GetOptions(
         "g=s" => \$opt_g, "global=s"    => \$opt_g,
         "h"   => \$opt_h, "help"        => \$opt_h,
         "i=s" => \$opt_i, "interface=s" => \$opt_i,
+        "s"   => \$opt_s, "selftest"    => \$opt_s,
         "v"   => \$opt_v, "version"     => \$opt_v,
 );
 
@@ -270,6 +271,25 @@ foreach $device ( split(":",$device) ){
 			warn "(debug) zero exit code, status OK\n\n" if $opt_debug;
 		}
 
+		if ($opt_s) {
+			warn "(debug) selftest log check activated\n\n" if $opt_debug;
+			$full_command = "$smart_command -d $interface -q silent -l selftest $device";
+			system($full_command);
+			my $return_code = $?;
+			warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
+
+			if ($return_code > 0) {
+				push(@error_messages, 'Self-test log contains errors');
+				warn "(debug) Self-test log contains errors\n\n" if $opt_debug;
+				escalate_status('WARNING');
+			}
+
+			if ($return_code) {
+				warn "(debug) non-zero exit code, generating error condition\n\n" if $opt_debug;
+			} else {
+				warn "(debug) zero exit code, status OK\n\n" if $opt_debug;
+			}
+		}
 
 		warn "###########################################################\n" if $opt_debug;
 		warn "(debug) CHECK 3: getting detailed statistics\n" if $opt_debug;

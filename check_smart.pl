@@ -26,8 +26,8 @@
 # Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
 # Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now awaited from input) (rev 5.6)
 # Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
-# Mar 22, 2017: Pavel Pulec (Inuits) - allow type "auto" (rev 5.8)
 # Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
+# Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
 
 
 use strict;
@@ -36,7 +36,7 @@ use Getopt::Long;
 use File::Basename qw(basename);
 my $basename = basename($0);
 
-my $revision = '$Revision: 5.8 $';
+my $revision = '$Revision: 5.9 $';
 
 use FindBin;
 use lib $FindBin::Bin;

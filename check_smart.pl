@@ -26,7 +26,9 @@
 # Feb 11, 2015: Claudio Kuenzler - Allow script to run outside of nagios plugins dir for FreeBSD too (rev 5.5)
 # Mar 12, 2015: Claudio Kuenzler - Change syntax of -g parameter (regex is now awaited from input) (rev 5.6)
 # Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
+# Mar 22, 2017: Pavel Pulec (Inuits) - allow type "auto" (rev 5.8)
 # Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
+
 
 use strict;
 use Getopt::Long;
@@ -106,7 +108,8 @@ if ($opt_d || $opt_g ) {
 
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat)/) {
+
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto)/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
@@ -426,7 +429,7 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";

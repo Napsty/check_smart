@@ -1,7 +1,7 @@
 check_smart
 ===========
 
-Please go to http://www.claudiokuenzler.com/nagios-plugins/check_smart.php for a complete and updated documentation.
+Please go to http://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for a complete and updated documentation.
 
 Fork of 2009's check_smart Nagios plugin by Kurt Yoder. 
 

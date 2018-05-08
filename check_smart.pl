@@ -28,7 +28,7 @@
 # Feb 6, 2017: Benedikt Heine - Fix Use of uninitialized value $device (rev 5.7)
 # Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
 # Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
-# Apr 28, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
+# May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
 
 use strict;
 use Getopt::Long;

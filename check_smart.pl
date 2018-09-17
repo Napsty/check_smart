@@ -460,6 +460,7 @@ sub print_help {
         print "  -i/--interface: device's interface type\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
+	print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";

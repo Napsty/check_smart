@@ -4,6 +4,8 @@
 #
 # This script was initially created under contract for the US Government and is therefore Public Domain
 #
+# Official documentation: https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php
+#
 # Changes and Modifications
 # =========================
 # Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
@@ -29,14 +31,14 @@
 # Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
 # Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
 # May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
+# Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
 
 use strict;
 use Getopt::Long;
-
 use File::Basename qw(basename);
-my $basename = basename($0);
 
-my $revision = '$Revision: 5.10 $';
+my $basename = basename($0);
+my $revision = '$Revision: 5.11 $';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -49,7 +51,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_s $opt_v);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_s $opt_v);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"       => \$opt_debug,
@@ -58,6 +60,7 @@ GetOptions(
         "g=s" => \$opt_g, "global=s"    => \$opt_g,
         "h"   => \$opt_h, "help"        => \$opt_h,
         "i=s" => \$opt_i, "interface=s" => \$opt_i,
+        "e=s" => \$opt_e, "exclude=s"   => \$opt_e,
         "s"   => \$opt_s, "selftest"    => \$opt_s,
         "v"   => \$opt_v, "version"     => \$opt_v,
 );
@@ -83,6 +86,10 @@ if ($opt_d || $opt_g ) {
         # list of devices for a loop
         my(@dev);
 
+#        # exclude list
+#        my $exclude_list = $opt_e;
+#        my @exclude_list = split /,/, $exclude_list;
+
         if ( $opt_d ){
             # normal mode - push opt_d on the list of devices
             push(@dev,$opt_d);
@@ -106,6 +113,10 @@ if ($opt_d || $opt_g ) {
                   ($opt_d?"device $opt_d ":"pattern $opt_g")." !\n\n";
             exit $ERRORS{'UNKNOWN'};
         }
+
+#        foreach my $exclude (@exclude_list) {
+#            warn "SMART Attribute $exclude set to ignore\n" if $opt_debug;
+#        }   
 
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
@@ -143,6 +154,9 @@ my $status_string = '';
 my $perf_string = '';
 my $Terminator = ' --- ';
 
+# exclude list
+my $exclude_list = $opt_e;
+my @exclude_list = split /,/, $exclude_list;
 
 foreach $device ( split(":",$device) ){
 	foreach $interface ( split(":",$interface) ){
@@ -312,9 +326,15 @@ foreach $device ( split(":",$device) ){
 				next unless $line =~ /^\s*\d+\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
 				my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
 				if ($when_failed ne '-'){
+					# Going through exclude list
+					#if (grep $_ eq $attribute_name, @exclude_list) {
+					if ( (grep $_ eq $attribute_name, @exclude_list) || (grep {$_ eq $when_failed} @exclude_list) ) {
+					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
+					} else {
 					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
 					escalate_status('WARNING');
 					warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
+					}
 				}
 				# some attributes produce questionable data; no need to graph them
 				if (grep {$_ eq $attribute_name} ('Unknown_Attribute', 'Power_On_Minutes') ){
@@ -322,7 +342,12 @@ foreach $device ( split(":",$device) ){
 				}
 				push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
 
-				# do some manual checks
+				# do some manual checks for Current_Pending_Sector
+				if ( ($attribute_name eq 'Current_Pending_Sector') && (grep {$_ eq $attribute_name} @exclude_list) ) {
+					# Current_Pending_Sector is in ignore list, move on
+					warn "SMART Attribute $attribute_name was set to be ignored\n" if $opt_debug;
+					next;
+				}
 				if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
 					if ($opt_b) {
 						if (($raw_value > 0) && ($raw_value >= $opt_b)) {

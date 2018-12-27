@@ -47,6 +47,7 @@ History
     Oct 10, 2017: Bobby Jones - Allow multiple devices for interface type megaraid, e.g. "megaraid,[1-5]" (rev 5.8)
     Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
     May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
+    Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
 
 
 

@@ -1,29 +1,28 @@
-check_smart
+check_smart monitoring plugin
 ===========
 
+Full and up to date documentation
+-------------------------
 Please go to http://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for a complete and updated documentation.
 
-Fork of 2009's check_smart Nagios plugin by Kurt Yoder. 
+Introduction
+-------------------------
+This is a fork of 2009's check_smart Nagios plugin by Kurt Yoder. 
 
-I got aware, that this plugin is the best to monitor SMART values of hard drives.
-Unfortunately to my big surprise, the plugin was not able to handle other device types than ata or scsi.
-Therefore disks attached to hardware raids like megaraid could not be checked.
+The original plugin was and is still the best to monitor SMART values of hard drives and solid state drives.
+However the original plugin was not able to handle other device types than ata or scsi.
+Therefore drives attached to hardware raids like megaraid could not be checked.
 
-I modified the plugin so it also works with disks attached to raid controllers... and added other features.
+This fork is modified in a way so it also works with disks attached to raid controllers... and other new features were added.
 
 Warning for CCISS RAID and FreeBSD
 -------------------------
-Today, November 8th 2013, I got aware that after having replaced cciss,0 (first physical disk) on a ProLiant DL380 G5 
-running with FreeBSD 9.1-p4, the SMART values of cciss,0 didn't change. To my big surprise the SMART values of cciss,1 were
-different after the disk replacement. This means that the SmartArray controller does not label the disks seen 
-by FreeBSD correctly (or FreeBSD makes a wrong tanslation). So be extra careful when using FreeBSD!
-
-I could "resolve" this by using the command 'cciss_vol_status'. 
+Please be careful when using this plugin on drives behind a CCISS (HP) hardware raid controller. 
 See http://www.claudiokuenzler.com/blog/413/freebsd-cciss-hp-smart-array-raid-wrong-disk-numbering-labeling for details.
 
 History
 -------------------------
-
+```
     Feb 3, 2009: Kurt Yoder - initial version of script (rev 1.0)
     Jul 8, 2013: Claudio Kuenzler - support hardware raids like megaraid (rev 2.0)
     Jul 9, 2013: Claudio Kuenzler - update help output (rev 2.1)
@@ -49,8 +48,7 @@ History
     May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
     Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
     Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
-
-
+```
 
 Sudoers entry
 -------------------------

@@ -48,6 +48,7 @@ History
     Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
     May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
     Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
+    Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
 
 
 

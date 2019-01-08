@@ -32,13 +32,14 @@
 # Apr 28, 2018: Pavel Pulec (Inuits) - allow type "auto" (rev 5.9)
 # May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
 # Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
+# Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '$Revision: 5.11 $';
+my $revision = '5.11.1';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -75,7 +76,7 @@ if ($opt_h) {
         exit $ERRORS{'OK'};
 }
 
-my ($device, $interface) = qw//;
+my ($device, $interface) = qw// // '';
 if ($opt_d || $opt_g ) {
         unless($opt_i){
                 print "must specify an interface for $opt_d using -i/--interface!\n\n";
@@ -85,10 +86,6 @@ if ($opt_d || $opt_g ) {
 
         # list of devices for a loop
         my(@dev);
-
-#        # exclude list
-#        my $exclude_list = $opt_e;
-#        my @exclude_list = split /,/, $exclude_list;
 
         if ( $opt_d ){
             # normal mode - push opt_d on the list of devices
@@ -114,10 +111,6 @@ if ($opt_d || $opt_g ) {
             exit $ERRORS{'UNKNOWN'};
         }
 
-#        foreach my $exclude (@exclude_list) {
-#            warn "SMART Attribute $exclude set to ignore\n" if $opt_debug;
-#        }   
-
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
 
@@ -141,7 +134,7 @@ if ($opt_d || $opt_g ) {
 
 
 if ($device eq "") {
-    print "must specify a device!\n\n";
+    print "UNKNOWN - Must specify a device!\n\n";
     print_help();
     exit $ERRORS{'UNKNOWN'};
 }
@@ -155,7 +148,7 @@ my $perf_string = '';
 my $Terminator = ' --- ';
 
 # exclude list
-my $exclude_list = $opt_e;
+my $exclude_list = $opt_e // '';
 my @exclude_list = split /,/, $exclude_list;
 
 foreach $device ( split(":",$device) ){
@@ -474,7 +467,7 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [-e list] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
@@ -485,6 +478,7 @@ sub print_help {
         print "  -i/--interface: device's interface type\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
+        print "  -e/--exclude: List of (comma separated) SMART attributes which should be excluded (=ignored)\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

@@ -15,7 +15,7 @@ Therefore drives attached to hardware raids like megaraid could not be checked.
 
 This fork is modified in a way so it also works with disks attached to raid controllers... and other new features were added.
 
-Warning for CCISS RAID and FreeBSD
+Warning for CCISS RAID 
 -------------------------
 Please be careful when using this plugin on drives behind a CCISS (HP) hardware raid controller. 
 See http://www.claudiokuenzler.com/blog/413/freebsd-cciss-hp-smart-array-raid-wrong-disk-numbering-labeling for details.

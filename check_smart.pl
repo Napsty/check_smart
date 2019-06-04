@@ -33,13 +33,14 @@
 # May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
 # Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
 # Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
+# Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '5.11.1';
+my $revision = '6.0';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -52,7 +53,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_s $opt_v);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_r $opt_s $opt_v $opt_w);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"       => \$opt_debug,
@@ -62,8 +63,10 @@ GetOptions(
         "h"   => \$opt_h, "help"        => \$opt_h,
         "i=s" => \$opt_i, "interface=s" => \$opt_i,
         "e=s" => \$opt_e, "exclude=s"   => \$opt_e,
+        "r=s" => \$opt_r, "raw=s"       => \$opt_r,
         "s"   => \$opt_s, "selftest"    => \$opt_s,
         "v"   => \$opt_v, "version"     => \$opt_v,
+        "w=s" => \$opt_w, "warn=s"      => \$opt_v,
 );
 
 if ($opt_v) {
@@ -150,6 +153,26 @@ my $Terminator = ' --- ';
 # exclude list
 my $exclude_list = $opt_e // '';
 my @exclude_list = split /,/, $exclude_list;
+
+# raw check list
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block';
+my @raw_check_list = split /,/, $raw_check_list;
+
+# warning threshold list (for raw checks)
+my $warn_list = $opt_w // '';
+my @warn_list = split /,/, $warn_list;
+my %warn_list;
+my $warn_key;
+my $warn_value;
+foreach my $warn_element (@warn_list) {
+  ($warn_key, $warn_value) = split /=/, $warn_element;
+  $warn_list{ $warn_key } = $warn_value;
+}
+
+# For backward compatibility, add -b parameter to warning thresholds
+if ($opt_b) {
+  $warn_list{ 'Current_Pending_Sector' } = $opt_b;
+}
 
 foreach $device ( split(":",$device) ){
 	foreach $interface ( split(":",$interface) ){
@@ -309,6 +332,11 @@ foreach $device ( split(":",$device) ){
 		@output = `$full_command`;
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
+		warn "(debug) Raw Check List: $raw_check_list\n" if $opt_debug;
+		warn "(debug) Exclude List: $exclude_list\n" if $opt_debug;
+		warn "(debug) Warning Thresholds:\n" if $opt_debug;
+		for my $warnpair ( sort keys %warn_list ) { warn "$warnpair=$warn_list{$warnpair}\n" if $opt_debug; } 
+		warn "\n" if $opt_debug;
 
 		# separate metric-gathering and output analysis for ATA vs SCSI SMART output
 		# Yeah - but megaraid is the same output as ata
@@ -335,31 +363,37 @@ foreach $device ( split(":",$device) ){
 				}
 				push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
 
-				# do some manual checks for Current_Pending_Sector
-				if ( ($attribute_name eq 'Current_Pending_Sector') && (grep {$_ eq $attribute_name} @exclude_list) ) {
-					# Current_Pending_Sector is in ignore list, move on
+				# skip attribute if it was set to be ignored in exclude_list
+				if (grep {$_ eq $attribute_name} @exclude_list) {
 					warn "SMART Attribute $attribute_name was set to be ignored\n" if $opt_debug;
 					next;
-				}
-				if ( ($attribute_name eq 'Current_Pending_Sector') && $raw_value ) {
-					if ($opt_b) {
-						if (($raw_value > 0) && ($raw_value >= $opt_b)) {
-							push(@error_messages, "$raw_value Sectors pending re-allocation");
-							escalate_status('WARNING');
-							warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
-						}
-						elsif (($raw_value > 0) && ($raw_value < $opt_b)) {
-							push(@error_messages, "$raw_value Sectors pending re-allocation (but less than threshold $opt_b)");
-							warn "(debug) Current_Pending_Sector is non-zero ($raw_value) but less than $opt_b\n\n" if $opt_debug;
-						}
-					} else {
-						push(@error_messages, "Sectors pending re-allocation");
-						escalate_status('WARNING');
-						warn "(debug) Current_Pending_Sector is non-zero ($raw_value)\n\n" if $opt_debug;
-					}
+				} else {
+				# manual checks on raw values for certain attributes deemed significant
+				  if (grep {$_ eq $attribute_name} @raw_check_list) {
+				    if ($raw_value > 0) {
+				      # Check for warning thresholds
+				      if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
+				        warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+				        push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+				        escalate_status('WARNING');
+				      } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
+					warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
+					push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+				      }
+				      else {
+				        warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+				        push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+				        escalate_status('WARNING');
+				      }
+				    } else {
+					warn "(debug) $attribute_name is OK ($raw_value)\n\n" if $opt_debug;
+				    }
+				  } else {
+				    warn "(debug) $attribute_name not in raw check list (raw value: $raw_value)\n\n" if $opt_debug;
+				  }
+
 				}
 			}
-
 		} else {
 			my ($current_temperature, $max_temperature, $current_start_stop, $max_start_stop) = qw//;
 			foreach my $line(@output){
@@ -467,7 +501,7 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-b N] [-e list] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
@@ -475,10 +509,12 @@ sub print_help {
         print "Note that -g only works with a fixed interface input (e.g. scsi, ata), not with special interface ids like cciss,1\n";
         print "\n";
         print "Other options\n";
-        print "  -i/--interface: device's interface type\n";
+        print "  -i/--interface: device's interface type (auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
-        print "  -b/--bad: Threshold value (integer) when to warn for N bad entries\n";
-        print "  -e/--exclude: List of (comma separated) SMART attributes which should be excluded (=ignored)\n";
+        print "  -r/--raw Comma separated list of ATA attributes to check (default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block)\n";
+        print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
+        print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
+        print "  -e/--exclude: Comma separated list of SMART attributes which should be excluded (=ignored)\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

@@ -3,7 +3,7 @@ check_smart monitoring plugin
 
 Full and up to date documentation
 -------------------------
-Please go to http://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for a complete and updated documentation.
+Please go to https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for a complete and updated documentation including examples and monitoring configurations.
 
 Introduction
 -------------------------
@@ -48,6 +48,7 @@ History
     May 5, 2018: Claudio Kuenzler - Check selftest log for errors using new parameter -s (rev 5.10)
     Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
     Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
+    Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
 ```
 
 Sudoers entry

@@ -34,13 +34,14 @@
 # Dec 27, 2018: Claudio Kuenzler - Add exclude list (-e) to ignore certain attributes (5.11)
 # Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
 # Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
+# Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.0';
+my $revision = '6.1';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -100,7 +101,7 @@ if ($opt_d || $opt_g ) {
 
         foreach my $opt_dl (@dev){
             warn "Found $opt_dl\n" if $opt_debug;
-            if (-b $opt_dl || -c $opt_dl){
+            if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/\/dev\/bus\/\d/) {
                 $device .= $opt_dl.":";
 
             } else {
@@ -503,10 +504,12 @@ sub print_help {
         print_revision($basename,$revision);
         print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
-        print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda\n";
+        print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
         print "               Example: '/dev/sd[a-z]' will search for all /dev/sda until /dev/sdz devices and report errors globally.\n";
-        print "Note that -g only works with a fixed interface input (e.g. scsi, ata), not with special interface ids like cciss,1\n";
+        print "               It is also possible to use -g in conjunction with megaraid devices. Example: -i 'megaraid,[0-3]'.\n";
+        print "               Does not output performance data for historical value graphing.\n";
+        print "Note that -g only works with a fixed interface (e.g. scsi, ata) and megaraid,N.\n";
         print "\n";
         print "Other options\n";
         print "  -i/--interface: device's interface type (auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";

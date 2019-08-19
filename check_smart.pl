@@ -528,7 +528,7 @@ foreach $device ( split(":",$device) ){
 		  }
 		  else {
 			$status_string = "Drive $model S/N $serial: ";
-			$status_string = join(', ', @error_messages);
+			$status_string .= join(', ', @error_messages);
 		  }
 		} 
 		else {

@@ -35,13 +35,14 @@
 # Jan 8, 2019: Claudio Kuenzler - Fix 'Use of uninitialized value' warnings (5.11.1)
 # Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
 # Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
+# Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.1';
+my $revision = '6.2';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -150,6 +151,8 @@ my $exit_status_local = 'OK';
 my $status_string = '';
 my $perf_string = '';
 my $Terminator = ' --- ';
+my $model = '';
+my $serial = '';
 
 # exclude list
 my $exclude_list = $opt_e // '';
@@ -198,7 +201,7 @@ foreach $device ( split(":",$device) ){
 		warn "(debug) CHECK 1: getting overall SMART health status for $tag \n" if $opt_debug;
 		warn "###########################################################\n\n\n" if $opt_debug;
 
-		my $full_command = "$smart_command -d $interface -H $device";
+		my $full_command = "$smart_command -d $interface -Hi $device";
 		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
 		my @output = `$full_command`;
@@ -212,6 +215,12 @@ foreach $device ( split(":",$device) ){
 
 		my $line_str_scsi = 'SMART Health Status: '; # SCSI and CCISS SMART line
 		my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
+
+		my $line_model_ata = 'Device Model: '; # ATA Model including vendor
+		my $line_vendor_scsi = 'Vendor: '; # SCSI Vendor
+		my $line_model_scsi = 'Product: '; # SCSI Model
+		my $line_serial_ata = 'Serial Number: '; # ATA Drive Serial Number
+		my $line_serial_scsi = 'Serial number: '; # SCSI Drive Serial Number
 
 		foreach my $line (@output){
 			if($line =~ /$line_str_scsi(.+)/){
@@ -240,6 +249,35 @@ foreach $device ( split(":",$device) ){
 					escalate_status('CRITICAL');
 				}
 			}
+			if($line =~ /$line_model_ata(.+)/){
+				$output_mode = "ata";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$model = $1;
+				$model =~ s/^\s+|\s+$//g;
+				warn "(debug) found model: $model\n\n" if $opt_debug;
+			}
+			if($line =~ /$line_vendor_scsi(.+)/){
+				$output_mode = "scsi";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$model = $1;
+				$model =~ s/^\s+|\s+$//g;
+				warn "(debug) found vendor: $model\n\n" if $opt_debug;
+			}
+			if($line =~ /$line_model_scsi(.+)/){
+				$output_mode = "scsi";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$model .= $1;
+				$model =~ s/^\s+|\s+$//g;
+				warn "(debug) found model: $model\n\n" if $opt_debug;
+			}
+			if($line =~ /$line_serial_ata(.+)/){
+				$output_mode = "ata";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$serial = $1;
+				$serial =~ s/^\s+|\s+$//g;
+				warn "(debug) found serial number $serial\n\n" if $opt_debug;
+			}
+
 		}
 
 		unless ($found_status) {
@@ -478,6 +516,7 @@ foreach $device ( split(":",$device) ){
 			$status_string .= $status_string_local.$Terminator;
 		  }
 		  else {
+			$status_string = "Drive $model S/N $serial: ";
 			$status_string = join(', ', @error_messages);
 		  }
 		} 
@@ -487,7 +526,7 @@ foreach $device ( split(":",$device) ){
 			$status_string .= $status_string_local.$Terminator;
 		  }
 		  else {
-			$status_string = "no SMART errors detected. ".join(', ', @error_messages);
+			$status_string = "Drive $model S/N $serial: no SMART errors detected. ".join(', ', @error_messages);
 		  }
 		}
 	}

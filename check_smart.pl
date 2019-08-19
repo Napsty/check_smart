@@ -255,37 +255,35 @@ foreach $device ( split(":",$device) ){
 				$output_mode = "ata";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$model = $1;
-				$model =~ s/^\s+|\s+$//g;
+				$model =~ s/\s{2,}/ /g;
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_vendor_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$vendor = $1;
-				$vendor =~ s/^\s+|\s+$//g;
 				warn "(debug) found vendor: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_model_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$product = $1;
-				$product =~ s/^\s+|\s+$//g;
 				$model = "$vendor $product";
-				$model =~ s/^\s+|\s+$//g;
+				$model =~ s/\s{2,}/ /g;
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_ata(.+)/){
 				$output_mode = "ata";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
-				$serial =~ s/^\s+|\s+$//g;
+				$srial =~ s/\s{2,}/ /g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
-				$serial =~ s/^\s+|\s+$//g;
+				$srial =~ s/\s{2,}/ /g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 

@@ -151,7 +151,9 @@ my $exit_status_local = 'OK';
 my $status_string = '';
 my $perf_string = '';
 my $Terminator = ' --- ';
+my $vendor = '';
 my $model = '';
+my $product = '';
 my $serial = '';
 
 # exclude list
@@ -259,19 +261,28 @@ foreach $device ( split(":",$device) ){
 			if($line =~ /$line_vendor_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-				$model = $1;
-				$model =~ s/^\s+|\s+$//g;
+				$vendor = $1;
+				$vendor =~ s/^\s+|\s+$//g;
 				warn "(debug) found vendor: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_model_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-				$model .= $1;
+				$product = $1;
+				$product =~ s/^\s+|\s+$//g;
+				$model = "$vendor $product";
 				$model =~ s/^\s+|\s+$//g;
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_ata(.+)/){
 				$output_mode = "ata";
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$serial = $1;
+				$serial =~ s/^\s+|\s+$//g;
+				warn "(debug) found serial number $serial\n\n" if $opt_debug;
+			}
+			if($line =~ /$line_serial_scsi(.+)/){
+				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
 				$serial =~ s/^\s+|\s+$//g;

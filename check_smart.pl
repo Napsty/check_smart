@@ -276,14 +276,14 @@ foreach $device ( split(":",$device) ){
 				$output_mode = "ata";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
-				$serial =~ s/\s{2,}/ /g;
+				$serial =~ s/^\s+|\s+$//g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_scsi(.+)/){
 				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
-				$serial =~ s/\s{2,}/ /g;
+				$serial =~ s/^\s+|\s+$//g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 

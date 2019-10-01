@@ -159,9 +159,9 @@ my $product = '';
 my $serial = '';
 
 # exclude lists
-my @exclude_fails = split /,/, $opt_e // '' ;
+my @exclude_checks = split /,/, $opt_e // '' ;
 my @exclude_perfdata = split /,/, $opt_E // '';
-push(@exclude_fails, @exclude_perfdata);
+push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
 my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block';
@@ -384,7 +384,7 @@ foreach $device ( split(":",$device) ){
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
 		warn "(debug) Raw Check List: $raw_check_list\n" if $opt_debug;
-		warn "(debug) Exclude List for Failures: ", join(",", @exclude_fails), "\n" if $opt_debug;
+		warn "(debug) Exclude List for Checks: ", join(",", @exclude_checks), "\n" if $opt_debug;
 		warn "(debug) Exclude List for Perfdata: ", join(",", @exclude_perfdata), "\n" if $opt_debug;
 		warn "(debug) Warning Thresholds:\n" if $opt_debug;
 		for my $warnpair ( sort keys %warn_list ) { warn "$warnpair=$warn_list{$warnpair}\n" if $opt_debug; } 
@@ -400,7 +400,7 @@ foreach $device ( split(":",$device) ){
 				my ($attribute_number, $attribute_name, $when_failed, $raw_value) = ($1, $2, $3, $4);
 				if ($when_failed ne '-'){
 					# Going through exclude list
-					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_fails) {
+					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_checks) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
 					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
@@ -416,8 +416,8 @@ foreach $device ( split(":",$device) ){
 					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
 				}
 
-				# skip attribute if it was set to be ignored in exclude_fails
-				if (grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_fails) {
+				# skip attribute if it was set to be ignored in exclude_checks
+				if (grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_checks) {
 					warn "(debug) SMART Attribute $attribute_name was set to be ignored\n\n" if $opt_debug;
 					next;
 				} else {
@@ -570,8 +570,8 @@ sub print_help {
         print "  -r/--raw Comma separated list of ATA attributes to check (default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block)\n";
         print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
-        print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to failures\n";
-        print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for failures as well as perfdata\n";
+        print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to checks\n";
+        print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

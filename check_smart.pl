@@ -36,13 +36,14 @@
 # Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
 # Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
 # Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
+# Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.2';
+my $revision = '6.3';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -569,8 +570,8 @@ sub print_help {
         print "  -r/--raw Comma separated list of ATA attributes to check (default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block)\n";
         print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
-        print "  -e/--exclude: Comma separated list of SMART attributes which should be excluded (=ignored) with regard to failures\n";
-        print "  -E/--exclude-all: Comma separated list of SMART attributes which should be completely ignored for failures as well as perfdata\n";
+        print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to failures\n";
+        print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for failures as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

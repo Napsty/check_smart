@@ -36,13 +36,14 @@
 # Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
 # Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
 # Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
+# Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.2';
+my $revision = '6.3';
 
 use FindBin;
 use lib $FindBin::Bin;
@@ -55,20 +56,21 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_r $opt_s $opt_v $opt_w);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w);
 Getopt::Long::Configure('bundling');
 GetOptions(
-                          "debug"       => \$opt_debug,
-        "b=i" => \$opt_b, "bad=i"       => \$opt_b,
-        "d=s" => \$opt_d, "device=s"    => \$opt_d,
-        "g=s" => \$opt_g, "global=s"    => \$opt_g,
-        "h"   => \$opt_h, "help"        => \$opt_h,
-        "i=s" => \$opt_i, "interface=s" => \$opt_i,
-        "e=s" => \$opt_e, "exclude=s"   => \$opt_e,
-        "r=s" => \$opt_r, "raw=s"       => \$opt_r,
-        "s"   => \$opt_s, "selftest"    => \$opt_s,
-        "v"   => \$opt_v, "version"     => \$opt_v,
-        "w=s" => \$opt_w, "warn=s"      => \$opt_v,
+                          "debug"         => \$opt_debug,
+        "b=i" => \$opt_b, "bad=i"         => \$opt_b,
+        "d=s" => \$opt_d, "device=s"      => \$opt_d,
+        "g=s" => \$opt_g, "global=s"      => \$opt_g,
+        "h"   => \$opt_h, "help"          => \$opt_h,
+        "i=s" => \$opt_i, "interface=s"   => \$opt_i,
+        "e=s" => \$opt_e, "exclude=s"     => \$opt_e,
+        "E=s" => \$opt_E, "exclude-all=s" => \$opt_E,
+        "r=s" => \$opt_r, "raw=s"         => \$opt_r,
+        "s"   => \$opt_s, "selftest"      => \$opt_s,
+        "v"   => \$opt_v, "version"       => \$opt_v,
+        "w=s" => \$opt_w, "warn=s"        => \$opt_v,
 );
 
 if ($opt_v) {
@@ -156,9 +158,10 @@ my $model = '';
 my $product = '';
 my $serial = '';
 
-# exclude list
-my $exclude_list = $opt_e // '';
-my @exclude_list = split /,/, $exclude_list;
+# exclude lists
+my @exclude_checks = split /,/, $opt_e // '' ;
+my @exclude_perfdata = split /,/, $opt_E // '';
+push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
 my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block';
@@ -381,7 +384,8 @@ foreach $device ( split(":",$device) ){
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
 		warn "(debug) Raw Check List: $raw_check_list\n" if $opt_debug;
-		warn "(debug) Exclude List: $exclude_list\n" if $opt_debug;
+		warn "(debug) Exclude List for Checks: ", join(",", @exclude_checks), "\n" if $opt_debug;
+		warn "(debug) Exclude List for Perfdata: ", join(",", @exclude_perfdata), "\n" if $opt_debug;
 		warn "(debug) Warning Thresholds:\n" if $opt_debug;
 		for my $warnpair ( sort keys %warn_list ) { warn "$warnpair=$warn_list{$warnpair}\n" if $opt_debug; } 
 		warn "\n" if $opt_debug;
@@ -392,12 +396,11 @@ foreach $device ( split(":",$device) ){
 			foreach my $line(@output){
 				# get lines that look like this:
 				#    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m
-				next unless $line =~ /^\s*\d+\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
-				my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
+				next unless $line =~ /^\s*(\d+)\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
+				my ($attribute_number, $attribute_name, $when_failed, $raw_value) = ($1, $2, $3, $4);
 				if ($when_failed ne '-'){
 					# Going through exclude list
-					#if (grep $_ eq $attribute_name, @exclude_list) {
-					if ( (grep $_ eq $attribute_name, @exclude_list) || (grep {$_ eq $when_failed} @exclude_list) ) {
+					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_checks) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
 					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
@@ -409,11 +412,13 @@ foreach $device ( split(":",$device) ){
 				if (grep {$_ eq $attribute_name} ('Unknown_Attribute', 'Power_On_Minutes') ){
 					next;
 				}
-				push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+				if (!grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_perfdata) {
+					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+				}
 
-				# skip attribute if it was set to be ignored in exclude_list
-				if (grep {$_ eq $attribute_name} @exclude_list) {
-					warn "SMART Attribute $attribute_name was set to be ignored\n" if $opt_debug;
+				# skip attribute if it was set to be ignored in exclude_checks
+				if (grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_checks) {
+					warn "(debug) SMART Attribute $attribute_name was set to be ignored\n\n" if $opt_debug;
 					next;
 				} else {
 				# manual checks on raw values for certain attributes deemed significant
@@ -550,7 +555,7 @@ exit $ERRORS{$exit_status};
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device regex>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a regular expression name of physical devices to be SMART monitored\n";
@@ -565,7 +570,8 @@ sub print_help {
         print "  -r/--raw Comma separated list of ATA attributes to check (default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block)\n";
         print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
-        print "  -e/--exclude: Comma separated list of SMART attributes which should be excluded (=ignored)\n";
+        print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to checks\n";
+        print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
         print "  --debug: show debugging information\n";

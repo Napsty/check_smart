@@ -395,11 +395,11 @@ foreach $device ( split(":",$device) ){
 			foreach my $line(@output){
 				# get lines that look like this:
 				#    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m
-				next unless $line =~ /^\s*\d+\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
-				my ($attribute_name, $when_failed, $raw_value) = ($1, $2, $3);
+				next unless $line =~ /^\s*(\d+)\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
+				my ($attribute_number, $attribute_name, $when_failed, $raw_value) = ($1, $2, $3, $4);
 				if ($when_failed ne '-'){
 					# Going through exclude list
-					if ( (grep $_ eq $attribute_name, @exclude_fails) || (grep {$_ eq $when_failed} @exclude_fails) ) {
+					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_fails) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
 					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
@@ -411,12 +411,12 @@ foreach $device ( split(":",$device) ){
 				if (grep {$_ eq $attribute_name} ('Unknown_Attribute', 'Power_On_Minutes') ){
 					next;
 				}
-				if (!grep {$_ eq $attribute_name} @exclude_perfdata) {
+				if (!grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_perfdata) {
 					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
 				}
 
 				# skip attribute if it was set to be ignored in exclude_fails
-				if (grep {$_ eq $attribute_name} @exclude_fails) {
+				if (grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_fails) {
 					warn "(debug) SMART Attribute $attribute_name was set to be ignored\n\n" if $opt_debug;
 					next;
 				} else {

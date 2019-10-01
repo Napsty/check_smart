@@ -51,6 +51,7 @@ History
     Jun 4, 2019: Claudio Kuenzler - Add raw check list (-r) and warning thresholds (-w) (6.0)
     Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
     Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
+    Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
 ```
 
 Sudoers entry

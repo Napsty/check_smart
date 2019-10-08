@@ -77,8 +77,7 @@ GetOptions(
 );
 
 if ($opt_v) {
-        print "$basename v$revision\n";
-        print "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+        print_revision($basename, $revision);
         exit $ERRORS{'OK'};
 }
 
@@ -556,6 +555,12 @@ $status_string =~ s/$Terminator$//;
 print "$exit_status: $status_string|$perf_string\n";
 exit $ERRORS{$exit_status};
 
+sub print_revision {
+        ($basename, $revision) = @_;
+        print "$basename v$revision\n";
+        print "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+
+}
 
 sub print_help {
         print_revision($basename,$revision);

@@ -53,7 +53,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -64,6 +64,7 @@ GetOptions(
         "i=s" => \$opt_i, "interface=s"   => \$opt_i,
         "e=s" => \$opt_e, "exclude=s"     => \$opt_e,
         "E=s" => \$opt_E, "exclude-all=s" => \$opt_E,
+        "q"   => \$opt_q, "quiet"         => \$opt_q,
         "r=s" => \$opt_r, "raw=s"         => \$opt_r,
         "s"   => \$opt_s, "selftest"      => \$opt_s,
         "v"   => \$opt_v, "version"       => \$opt_v,
@@ -179,6 +180,10 @@ foreach my $warn_element (@warn_list) {
 if ($opt_b) {
   $warn_list{ 'Current_Pending_Sector' } = $opt_b;
 }
+
+my @drives_status_okay;
+my @drives_status_not_okay;
+
 
 foreach $device ( split(":",$device) ){
 	foreach $interface ( split(":",$interface) ){
@@ -523,29 +528,53 @@ foreach $device ( split(":",$device) ){
 		
 		if($exit_status_local ne 'OK'){
 		  if ($opt_g) {
-			$status_string_local = $label.join(', ', @error_messages);
-			$status_string .= $status_string_local.$Terminator;
+			$status_string = $label.join(', ', @error_messages);
 		  }
 		  else {
-			$status_string = "Drive $model S/N $serial: ";
-			$status_string .= join(', ', @error_messages);
+			$status_string = "Drive $model S/N $serial: " . join(', ', @error_messages);
 		  }
+		  push @drives_status_not_okay, $status_string;
 		} 
 		else {
 		  if ($opt_g) {
-			$status_string_local = $label."Device is clean";
-			$status_string .= $status_string_local.$Terminator;
+			$status_string = $label."Device is clean";
 		  }
 		  else {
 			$status_string = "Drive $model S/N $serial: no SMART errors detected. ".join(', ', @error_messages);
 		  }
+		  push @drives_status_okay, $status_string;
 		}
 	}
 }
 
-    warn "(debug) final status/output: $exit_status\n" if $opt_debug;
+warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
-$status_string =~ s/$Terminator$//;
+my @msg_list;
+
+if ($opt_debug) {
+	warn "(debug) drives  ok: @drives_status_okay\n";
+	warn "(debug) drives nok: @drives_status_not_okay\n\n";
+}
+
+if (@drives_status_not_okay and @drives_status_okay and $opt_q) {
+	push @drives_status_not_okay, "Other drives OK";
+}
+elsif (@drives_status_okay and not @drives_status_not_okay and $opt_g and $opt_q) {
+	push @msg_list, @drives_status_okay;
+}
+# elsif (@drives_status_okay and not @drives_status_not_okay and $opt_q and $opt_g) {
+#	push @msg_list, "All drives OK";
+#}
+
+push @msg_list, @drives_status_not_okay;
+
+if (not $opt_q) {
+	push @msg_list, @drives_status_okay;
+}
+
+$status_string = join($Terminator, @msg_list);
+
+# Final output: Nagios data and exit code
 print "$exit_status: $status_string|$perf_string\n";
 exit $ERRORS{$exit_status};
 
@@ -577,6 +606,7 @@ sub print_help {
         print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
+        print "  -q/--quiet: When faults detected, do not show other devices; only affects output with -g.\n";
         print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";
 }

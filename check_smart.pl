@@ -552,7 +552,7 @@ exit $ERRORS{$exit_status};
 sub print_revision {
         ($basename, $revision) = @_;
         print "$basename v$revision\n";
-        print "The nagios plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+        print "The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
 
 }
 

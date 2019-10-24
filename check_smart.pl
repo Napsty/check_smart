@@ -582,6 +582,7 @@ sub print_revision {
 
 }
 
+
 sub print_help {
         print_revision($basename,$revision);
         print "\nUsage: $basename {-d=<block device>|-g=<block device glob>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [--debug]\n\n";

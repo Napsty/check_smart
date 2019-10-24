@@ -562,9 +562,6 @@ if (@drives_status_not_okay and @drives_status_okay and $opt_q) {
 elsif (@drives_status_okay and not @drives_status_not_okay and $opt_g and $opt_q) {
 	push @msg_list, @drives_status_okay;
 }
-# elsif (@drives_status_okay and not @drives_status_not_okay and $opt_q and $opt_g) {
-#	push @msg_list, "All drives OK";
-#}
 
 push @msg_list, @drives_status_not_okay;
 

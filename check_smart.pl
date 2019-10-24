@@ -45,12 +45,6 @@ use File::Basename qw(basename);
 my $basename = basename($0);
 my $revision = '6.3';
 
-use FindBin;
-use lib $FindBin::Bin;
-BEGIN {
- push @INC,'/usr/lib/nagios/plugins','/usr/lib64/nagios/plugins','/usr/local/libexec/nagios';
-}
-
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 

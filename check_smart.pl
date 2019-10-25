@@ -183,6 +183,7 @@ if ($opt_b) {
 
 my @drives_status_okay;
 my @drives_status_not_okay;
+my $drive_details;
 
 
 foreach $device ( split(":",$device) ){
@@ -531,7 +532,8 @@ foreach $device ( split(":",$device) ){
 			$status_string = $label.join(', ', @error_messages);
 		  }
 		  else {
-			$status_string = "Drive $model S/N $serial: " . join(', ', @error_messages);
+			$drive_details = "Drive $model S/N $serial: ";
+			$status_string = join(', ', @error_messages);
 		  }
 		  push @drives_status_not_okay, $status_string;
 		} 
@@ -540,7 +542,8 @@ foreach $device ( split(":",$device) ){
 			$status_string = $label."Device is clean";
 		  }
 		  else {
-			$status_string = "Drive $model S/N $serial: no SMART errors detected. ".join(', ', @error_messages);
+			$drive_details = "Drive $model S/N $serial: no SMART errors detected. ";
+			$status_string = join(', ', @error_messages);
 		  }
 		  push @drives_status_okay, $status_string;
 		}
@@ -549,27 +552,26 @@ foreach $device ( split(":",$device) ){
 
 warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
-my @msg_list;
+my @msg_list = ($drive_details) if $drive_details;
+
+if (@drives_status_not_okay) {
+	push @msg_list, grep { $_ } @drives_status_not_okay;
+}
+
+if (@drives_status_not_okay and $opt_q and @drives_status_okay) {
+	push @msg_list, "Other drives OK";
+} else {
+	push @msg_list, grep { $_ } @drives_status_okay;
+}
+
 
 if ($opt_debug) {
 	warn "(debug) drives  ok: @drives_status_okay\n";
-	warn "(debug) drives nok: @drives_status_not_okay\n\n";
+	warn "(debug) drives nok: @drives_status_not_okay\n";
+	warn "(debug)   msg_list: ".join('^', @msg_list)."\n\n";
 }
 
-if (@drives_status_not_okay and @drives_status_okay and $opt_q) {
-	push @drives_status_not_okay, "Other drives OK";
-}
-elsif (@drives_status_okay and not @drives_status_not_okay and $opt_g and $opt_q) {
-	push @msg_list, @drives_status_okay;
-}
-
-push @msg_list, @drives_status_not_okay;
-
-if (not $opt_q) {
-	push @msg_list, @drives_status_okay;
-}
-
-$status_string = join($Terminator, @msg_list);
+$status_string = join( ($opt_g ? $Terminator : ' '), @msg_list);
 
 # Final output: Nagios data and exit code
 print "$exit_status: $status_string|$perf_string\n";

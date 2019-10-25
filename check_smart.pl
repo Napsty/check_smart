@@ -45,12 +45,9 @@ use File::Basename qw(basename);
 my $basename = basename($0);
 my $revision = '6.3';
 
-use FindBin;
-use lib $FindBin::Bin;
-BEGIN {
- push @INC,'/usr/lib/nagios/plugins','/usr/lib64/nagios/plugins','/usr/local/libexec/nagios';
-}
-use utils qw(%ERRORS &print_revision &support &usage);
+# Standard Nagios return codes
+my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
+
 
 $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
@@ -74,7 +71,7 @@ GetOptions(
 );
 
 if ($opt_v) {
-        print_revision($basename,$revision);
+        print_revision($basename, $revision);
         exit $ERRORS{'OK'};
 }
 
@@ -552,6 +549,12 @@ $status_string =~ s/$Terminator$//;
 print "$exit_status: $status_string|$perf_string\n";
 exit $ERRORS{$exit_status};
 
+sub print_revision {
+        ($basename, $revision) = @_;
+        print "$basename v$revision\n";
+        print "The monitoring plugins come with ABSOLUTELY NO WARRANTY. You may redistribute\ncopies of the plugins under the terms of the GNU General Public License.\nFor more information about these matters, see the file named COPYING.\n";
+
+}
 
 sub print_help {
         print_revision($basename,$revision);

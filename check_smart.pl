@@ -37,13 +37,14 @@
 # Jun 11, 2019: Claudio Kuenzler - Allow using pseudo bus device /dev/bus/N (6.1)
 # Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
 # Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
+# Oct 29, 2019: Jesse Becker - Remove dependency on utils.pm, add quiet parameter (6.4)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.3';
+my $revision = '6.4';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -606,7 +607,7 @@ sub print_help {
         print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check";
         print "  -h/--help: this help\n";
-        print "  -q/--quiet: When faults detected, do not show other devices; only affects output with -g.\n";
+        print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";
 }

@@ -127,21 +127,18 @@ if ($opt_d || $opt_g ) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "megaraid," . $k . ":";
-              $label = "[$interface] - ";
             }
           }
           elsif($interface =~ m/3ware,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "3ware," . $k . ":";
-              $label = "[$interface] - ";
             }
           }
           elsif($interface =~ m/cciss,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "cciss," . $k . ":";
-              $label = "[$interface] - ";
             }
           }
           else {

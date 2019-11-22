@@ -127,18 +127,21 @@ if ($opt_d || $opt_g ) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "megaraid," . $k . ":";
+              $label = "[$interface] - ";
             }
           }
           elsif($interface =~ m/3ware,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "3ware," . $k . ":";
+              $label = "[$interface] - ";
             }
           }
           elsif($interface =~ m/cciss,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "cciss," . $k . ":";
+              $label = "[$interface] - ";
             }
           }
           else {
@@ -211,7 +214,11 @@ foreach $device ( split(":",$device) ){
 			# we had a pattern based on $opt_g
 			$tag   = $device;
 			$tag   =~ s/$opt_g//;
-			$label = "[$device] - ";
+                        if($interface =~ qr/(?:megaraid|3ware|cciss)/){ 
+			  $label = "[$interface] - "; 
+                        } else {
+			  $label = "[$device] - ";
+                        }
 		} else {
 			# we had a device specified using $opt_d (traditional)
 			$label = "";

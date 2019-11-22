@@ -38,13 +38,14 @@
 # Aug 19, 2019: Claudio Kuenzler - Add device model and serial number in output (6.2)
 # Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
 # Oct 29, 2019: Jesse Becker - Remove dependency on utils.pm, add quiet parameter (6.4)
+# Nov 22, 2019: Claudio Kuenzler - Add Reported_Uncorrect and Reallocated_Event_Count to default raw list (6.5)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.4';
+my $revision = '6.5';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -163,7 +164,7 @@ my @exclude_perfdata = split /,/, $opt_E // '';
 push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
-my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block';
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count';
 my @raw_check_list = split /,/, $raw_check_list;
 
 # warning threshold list (for raw checks)

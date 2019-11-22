@@ -1,0 +1,12 @@
+---
+sudo: required
+dist: xenial
+
+language: generic
+
+before_install:
+  - sudo apt-get update -q
+  - sudo apt-get install -qq perl
+
+script:
+  - ./check_smart.pl --help

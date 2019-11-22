@@ -129,6 +129,12 @@ if ($opt_d || $opt_g ) {
               $interface .= "megaraid," . $k . ":";
             }
           }
+          elsif($interface =~ m/3ware,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "3ware," . $k . ":";
+            }
+          }
           else {
             $interface .= ":";
           }

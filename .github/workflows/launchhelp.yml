@@ -1,0 +1,20 @@
+# @file package-release.yml
+---
+name: Launch help
+
+# Trigger the workflow on push or pull request
+on: [push, pull_request]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Launch script with --help
+      run: |
+        ./check_smart.pl --help
+  pull_request:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Launch script with --help
+      run: |
+        ./check_smart.pl --help

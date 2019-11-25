@@ -1,4 +1,4 @@
-# @file package-release.yml
+# @file launchhelp.yml
 ---
 name: Launch help
 
@@ -6,23 +6,13 @@ name: Launch help
 on: [push, pull_request]
 
 jobs:
-  push:
+  validate:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Install perl
       run: |
-        apt-get install -qq -yy perl
-    - name: Launch script with --help
-      run: |
-        ./check_smart.pl --help
-  pull_request:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Install perl
-      run: |
-        apt-get install -qq -yy perl
+        sudo apt-get install -qq -yy perl
     - name: Launch script with --help
       run: |
         ./check_smart.pl --help

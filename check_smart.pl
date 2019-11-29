@@ -39,13 +39,14 @@
 # Oct 1, 2019: Michael Krahe - Allow exclusion from perfdata as well (-E) and by attribute number (6.3)
 # Oct 29, 2019: Jesse Becker - Remove dependency on utils.pm, add quiet parameter (6.4)
 # Nov 22, 2019: Claudio Kuenzler - Add Reported_Uncorrect and Reallocated_Event_Count to default raw list (6.5)
+# Nov 29, 2019: Claudio Kuenzler - Add 3ware and cciss devices for global (-g) check, adjust output (6.6)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.5';
+my $revision = '6.6';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -129,6 +130,18 @@ if ($opt_d || $opt_g ) {
               $interface .= "megaraid," . $k . ":";
             }
           }
+          elsif($interface =~ m/3ware,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "3ware," . $k . ":";
+            }
+          }
+          elsif($interface =~ m/cciss,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "cciss," . $k . ":";
+            }
+          }
           else {
             $interface .= ":";
           }
@@ -199,7 +212,11 @@ foreach $device ( split(":",$device) ){
 			# we had a pattern based on $opt_g
 			$tag   = $device;
 			$tag   =~ s/$opt_g//;
-			$label = "[$device] - ";
+                        if($interface =~ qr/(?:megaraid|3ware|cciss)/){ 
+			  $label = "[$interface] - "; 
+                        } else {
+			  $label = "[$device] - ";
+                        }
 		} else {
 			# we had a device specified using $opt_d (traditional)
 			$label = "";

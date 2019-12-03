@@ -211,7 +211,7 @@ foreach $device ( split(":",$device) ){
 		if ($opt_g){
 			# we had a pattern based on $opt_g
 			$tag   = $device;
-			$tag   =~ s/$opt_g//;
+			$tag   =~ s/\Q$opt_g\E//;
                         if($interface =~ qr/(?:megaraid|3ware|cciss)/){ 
 			  $label = "[$interface] - "; 
                         } else {

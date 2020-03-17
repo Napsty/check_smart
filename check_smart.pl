@@ -41,13 +41,14 @@
 # Nov 22, 2019: Claudio Kuenzler - Add Reported_Uncorrect and Reallocated_Event_Count to default raw list (6.5)
 # Nov 29, 2019: Claudio Kuenzler - Add 3ware and cciss devices for global (-g) check, adjust output (6.6)
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
+# Mar 17, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.6.1';
+my $revision = '6.7.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -123,7 +124,7 @@ if ($opt_d || $opt_g ) {
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
 
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto)/) {
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto|nvme)/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
@@ -180,6 +181,10 @@ push(@exclude_checks, @exclude_perfdata);
 # raw check list
 my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count';
 my @raw_check_list = split /,/, $raw_check_list;
+
+# raw check list for nvme
+my $raw_check_list_nvme = $opt_r // 'Media_and_Data_Integrity_Errors';
+my @raw_check_list_nvme = split /,/, $raw_check_list_nvme;
 
 # warning threshold list (for raw checks)
 my $warn_list = $opt_w // '';
@@ -238,9 +243,9 @@ foreach $device ( split(":",$device) ){
 		my $output_mode = "";
 		# parse ata output, looking for "health status: passed"
 		my $found_status = 0;
+
 		my $line_str_ata = 'SMART overall-health self-assessment test result: '; # ATA SMART line
 		my $ok_str_ata = 'PASSED'; # ATA SMART OK string
-
 		my $line_str_scsi = 'SMART Health Status: '; # SCSI and CCISS SMART line
 		my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
 
@@ -264,9 +269,14 @@ foreach $device ( split(":",$device) ){
 					escalate_status('CRITICAL');
 				}
 			}
-			if($line =~ /$line_str_ata(.+)/){
+			elsif($line =~ /$line_str_ata(.+)/){
 				$found_status = 1;
-				$output_mode = "ata";
+				if ($interface eq 'nvme') {
+					$output_mode = "nvme";
+					warn "(debug) setting output mode to nvme\n\n" if $opt_debug;
+				} else {
+					$output_mode = "ata";
+				}
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				if ($1 eq $ok_str_ata) {
 					warn "(debug) found string '$ok_str_ata'; status OK\n\n" if $opt_debug;
@@ -278,20 +288,17 @@ foreach $device ( split(":",$device) ){
 				}
 			}
 			if($line =~ /$line_model_ata(.+)/){
-				$output_mode = "ata";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$model = $1;
 				$model =~ s/\s{2,}/ /g;
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_vendor_scsi(.+)/){
-				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$vendor = $1;
 				warn "(debug) found vendor: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_model_scsi(.+)/){
-				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$product = $1;
 				$model = "$vendor $product";
@@ -299,14 +306,12 @@ foreach $device ( split(":",$device) ){
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_ata(.+)/){
-				$output_mode = "ata";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
 				$serial =~ s/^\s+|\s+$//g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_scsi(.+)/){
-				$output_mode = "scsi";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$serial = $1;
 				$serial =~ s/^\s+|\s+$//g;
@@ -396,7 +401,7 @@ foreach $device ( split(":",$device) ){
 		}
 
 		warn "###########################################################\n" if $opt_debug;
-		warn "(debug) CHECK 3: getting detailed statistics\n" if $opt_debug;
+		warn "(debug) CHECK 3: getting detailed statistics from attributes\n" if $opt_debug;
 		warn "(debug) information contains a few more potential trouble spots\n" if $opt_debug;
 		warn "(debug) plus, we can also use the information for perfdata/graphing\n" if $opt_debug;
 		warn "###########################################################\n\n\n" if $opt_debug;
@@ -469,6 +474,120 @@ foreach $device ( split(":",$device) ){
 				  }
 
 				}
+			}
+		} elsif ($output_mode =~ "nvme") {
+			foreach my $line(@output){
+				next unless $line =~ /(\w.+):\s+(?:(\dx\d+|\d+(?:\s|,)?(?:\d+,?\s?)?(?:\d+,?\s?)?(?:\d+,?\s?)?(?:\d+,?\s?)?))/;
+				my ($attribute_name, $raw_value) = ($1, $2);
+				$raw_value =~ s/\s|,//g;
+				$attribute_name =~ s/\s/_/g;
+
+				# some attributes produce irrelevant data; no need to graph them
+				if (grep {$_ eq $attribute_name} ('Critical_Warning', 'Power_On_Hours') ){
+					push (@exclude_perfdata, "$attribute_name");
+				}
+				# create performance data unless defined in exclude_perfdata list
+				if (!grep {$_ eq $attribute_name} @exclude_perfdata) {
+					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+				}
+
+				# skip attribute if it was set to be ignored in exclude_checks
+				if (grep {$_ eq $attribute_name} @exclude_checks) {
+					warn "(debug) SMART Attribute $attribute_name was set to be ignored\n\n" if $opt_debug;
+					next;
+				}
+
+				# manual checks on raw values for certain attributes deemed significan
+				if (grep {$_ eq $attribute_name} @raw_check_list_nvme) {
+					if ($raw_value > 0) {
+					  # Check for warning thresholds
+					  if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
+					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    escalate_status('WARNING');
+					  } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
+					    warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					  } else {
+					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    escalate_status('WARNING');
+					  }
+				       } else {
+					    warn "(debug) $attribute_name is OK ($raw_value)\n\n" if $opt_debug;
+				       }
+				} else {
+					warn "(debug) $attribute_name not in raw check list (raw value: $raw_value)\n\n" if $opt_debug;
+				}
+
+				# Handle Critical_Warning values
+				if ($attribute_name eq 'Critical_Warning') {
+					if ($raw_value eq '0x01') {
+					  push(@error_messages, "Available spare below threshold");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x02') {
+					  push(@error_messages, "Temperature is above or below thresholds");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x03') {
+					  push(@error_messages, "Available spare below threshold and temperature is above or below thresholds");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x04') {
+					  push(@error_messages, "NVM subsystem reliability degraded");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x05') {
+					  push(@error_messages, "Available spare below threshold and NVM subsystem reliability degraded");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x06') {
+					  push(@error_messages, "Temperature is above or below thresholds and NVM subsystem reliability degraded");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x07') {
+					  push(@error_messages, "Available spare below threshold and Temperature is above or below thresholds and NVM subsystem reliability degraded");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x08') {
+					  push(@error_messages, "Media in read only mode");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x09') {
+					  push(@error_messages, "Media in read only mode and Available spare below threshold");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0A') {
+					  push(@error_messages, "Media in read only mode and Temperature is above or below thresholds");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0B') {
+					  push(@error_messages, "Media in read only mode and Temperature is above or below thresholds and Available spare below threshold");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0C') {
+					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0D') {
+					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Available spare below threshold");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0E') {
+					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x0F') {
+					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
+				          escalate_status('WARNING');
+					}
+					elsif ($raw_value eq '0x10') {
+					  push(@error_messages, "Volatile memory backup device failed");
+				          escalate_status('WARNING');
+					}
+				}
+
 			}
 		} else {
 			my ($current_temperature, $max_temperature, $current_start_stop, $max_start_stop) = qw//;
@@ -611,15 +730,17 @@ sub print_help {
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a glob pattern name of physical devices to be SMART monitored\n";
-        print "               Example: '/dev/sd[a-z]' will search for all /dev/sda until /dev/sdz devices and report errors globally.\n";
-        print "               It is also possible to use -g in conjunction with megaraid devices. Example: -i 'megaraid,[0-3]'.\n";
-        print "               Does not output performance data for historical value graphing.\n";
+        print "       Example: '/dev/sd[a-z]' will search for all /dev/sda until /dev/sdz devices and report errors globally.\n";
+        print "       It is also possible to use -g in conjunction with megaraid devices. Example: -i 'megaraid,[0-3]'.\n";
+        print "       Does not output performance data for historical value graphing.\n";
         print "Note that -g only works with a fixed interface (e.g. scsi, ata) and megaraid,N.\n";
         print "\n";
         print "Other options\n";
-        print "  -i/--interface: device's interface type (auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";
+        print "  -i/--interface: device's interface type (auto|ata|scsi|nvme|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
-        print "  -r/--raw Comma separated list of ATA attributes to check (default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block)\n";
+        print "  -r/--raw Comma separated list of ATA or NVMe attributes to check\n";
+        print "       ATA default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block\n";
+        print "       NVMe default: Media_and_Data_Integrity_Errors\n";
         print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
         print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to checks\n";

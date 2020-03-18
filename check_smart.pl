@@ -497,29 +497,6 @@ foreach $device ( split(":",$device) ){
 					next;
 				}
 
-				# manual checks on raw values for certain attributes deemed significan
-				if (grep {$_ eq $attribute_name} @raw_check_list_nvme) {
-					if ($raw_value > 0) {
-					  # Check for warning thresholds
-					  if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
-					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
-					    escalate_status('WARNING');
-					  } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
-					    warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
-					  } else {
-					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
-					    escalate_status('WARNING');
-					  }
-				       } else {
-					    warn "(debug) $attribute_name is OK ($raw_value)\n\n" if $opt_debug;
-				       }
-				} else {
-					warn "(debug) $attribute_name not in raw check list (raw value: $raw_value)\n\n" if $opt_debug;
-				}
-
 				# Handle Critical_Warning values
 				if ($attribute_name eq 'Critical_Warning') {
 					if ($raw_value eq '0x01') {
@@ -588,6 +565,28 @@ foreach $device ( split(":",$device) ){
 					}
 				}
 
+				# manual checks on raw values for certain attributes deemed significan
+				if (grep {$_ eq $attribute_name} @raw_check_list_nvme) {
+					if ($raw_value > 0) {
+					  # Check for warning thresholds
+					  if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
+					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    escalate_status('WARNING');
+					  } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
+					    warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					  } else {
+					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    escalate_status('WARNING');
+					  }
+				       } else {
+					    warn "(debug) $attribute_name is OK ($raw_value)\n\n" if $opt_debug;
+				       }
+				} else {
+					warn "(debug) $attribute_name not in raw check list (raw value: $raw_value)\n\n" if $opt_debug;
+				}
 			}
 		} else {
 			my ($current_temperature, $max_temperature, $current_start_stop, $max_start_stop) = qw//;

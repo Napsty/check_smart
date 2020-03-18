@@ -477,7 +477,7 @@ foreach $device ( split(":",$device) ){
 			}
 		} elsif ($output_mode =~ "nvme") {
 			foreach my $line(@output){
-				next unless $line =~ /(\w.+):\s+(?:(\dx\d+|\d+(?:\s|,)?(?:\d+,?\s?)?(?:\d+,?\s?)?(?:\d+,?\s?)?(?:\d+,?\s?)?))/;
+				next unless $line =~ /(\w.+):\s+(?:(\dx\d+|\d(?:(?:,?\s?\d+,?\s?)?)+))/;
 				my ($attribute_name, $raw_value) = ($1, $2);
 				$raw_value =~ s/\s|,//g;
 				$attribute_name =~ s/\s/_/g;

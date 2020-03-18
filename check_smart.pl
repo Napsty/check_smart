@@ -250,6 +250,7 @@ foreach $device ( split(":",$device) ){
 		my $ok_str_scsi = 'OK'; #SCSI and CCISS SMART OK string
 
 		my $line_model_ata = 'Device Model: '; # ATA Model including vendor
+		my $line_model_nvme = 'Model Number: '; # NVMe Model including vendor
 		my $line_vendor_scsi = 'Vendor: '; # SCSI Vendor
 		my $line_model_scsi = 'Product: '; # SCSI Model
 		my $line_serial_ata = 'Serial Number: '; # ATA Drive Serial Number
@@ -288,6 +289,12 @@ foreach $device ( split(":",$device) ){
 				}
 			}
 			if($line =~ /$line_model_ata(.+)/){
+				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				$model = $1;
+				$model =~ s/\s{2,}/ /g;
+				warn "(debug) found model: $model\n\n" if $opt_debug;
+			}
+			if($line =~ /$line_model_nvme(.+)/){
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$model = $1;
 				$model =~ s/\s{2,}/ /g;

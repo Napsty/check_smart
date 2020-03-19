@@ -41,7 +41,7 @@
 # Nov 22, 2019: Claudio Kuenzler - Add Reported_Uncorrect and Reallocated_Event_Count to default raw list (6.5)
 # Nov 29, 2019: Claudio Kuenzler - Add 3ware and cciss devices for global (-g) check, adjust output (6.6)
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
-# Mar 17, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7)
+# Mar 19, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7)
 
 use strict;
 use Getopt::Long;
@@ -484,7 +484,7 @@ foreach $device ( split(":",$device) ){
 			}
 		} elsif ($output_mode =~ "nvme") {
 			foreach my $line(@output){
-				next unless $line =~ /(\w.+):\s+(?:(\dx\d+|\d(?:(?:,?\s?\d+,?\s?)?)+))/;
+				next unless $line =~ /(\w.+):\s+(?:(\dx\d(?:\d?\w?)|\d(?:(?:,?\s?\d+,?\s?)?)+))/;
 				my ($attribute_name, $raw_value) = ($1, $2);
 				$raw_value =~ s/\s|,//g;
 				$attribute_name =~ s/\s/_/g;

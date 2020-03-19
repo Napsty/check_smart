@@ -490,7 +490,7 @@ foreach $device ( split(":",$device) ){
 				$attribute_name =~ s/\s/_/g;
 
 				# some attributes produce irrelevant data; no need to graph them
-				if (grep {$_ eq $attribute_name} ('Critical_Warning', 'Power_On_Hours') ){
+				if (grep {$_ eq $attribute_name} ('Critical_Warning') ){
 					push (@exclude_perfdata, "$attribute_name");
 				}
 				# create performance data unless defined in exclude_perfdata list

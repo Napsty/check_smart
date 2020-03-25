@@ -7,7 +7,7 @@ Please go to https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php 
 
 Introduction
 -------------------------
-This is a plugin to monitor the values of SMART attributes of hard and solid state drives. The plugin is a fork of check_smart released in 2009 by Kurt Yoder. Since then the plugin has undergone a lot of changes. It allows to monitor drives behind hardware controllers and added a lot of parameters to fine tune the checks and set thresholds (on a per attribute setting).
+This is a plugin to monitor the health and values of SMART attributes of hard (HDD), solid state (SSD) and NVMe drives. The plugin is a fork of check_smart released in 2009 by Kurt Yoder. Since then the plugin has undergone a lot of changes. It allows to monitor drives behind hardware controllers and added a lot of parameters to fine tune the checks and set thresholds (on a per attribute setting).
 
 Sudoers entry
 -------------------------

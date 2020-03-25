@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Check SMART status of ATA/SCSI disks, returning any usable metrics as perfdata.
+# Check SMART status of ATA/SCSI/NVMe drives, returning any usable metrics as perfdata.
 # For usage information, run ./check_smart -h
 #
 # This script was initially created under contract for the US Government and is therefore Public Domain
@@ -41,7 +41,7 @@
 # Nov 22, 2019: Claudio Kuenzler - Add Reported_Uncorrect and Reallocated_Event_Count to default raw list (6.5)
 # Nov 29, 2019: Claudio Kuenzler - Add 3ware and cciss devices for global (-g) check, adjust output (6.6)
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
-# Mar 19, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7)
+# Mar 25, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7.0)
 
 use strict;
 use Getopt::Long;

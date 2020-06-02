@@ -42,13 +42,14 @@
 # Nov 29, 2019: Claudio Kuenzler - Add 3ware and cciss devices for global (-g) check, adjust output (6.6)
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
 # Mar 25, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7.0)
+# Jun 2, 2020: Claudio Kuenzler - Bugfix to make --warn work (6.7.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.7.0';
+my $revision = '6.7.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -73,7 +74,7 @@ GetOptions(
         "r=s" => \$opt_r, "raw=s"         => \$opt_r,
         "s"   => \$opt_s, "selftest"      => \$opt_s,
         "v"   => \$opt_v, "version"       => \$opt_v,
-        "w=s" => \$opt_w, "warn=s"        => \$opt_v,
+        "w=s" => \$opt_w, "warn=s"        => \$opt_w,
 );
 
 if ($opt_v) {

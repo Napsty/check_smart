@@ -43,13 +43,14 @@
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
 # Mar 25, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7.0)
 # Jun 2, 2020: Claudio Kuenzler - Bugfix to make --warn work (6.7.1)
+# Oct 2, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.7.1';
+my $revision = '6.8.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -59,7 +60,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_skip_sa);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -75,6 +76,7 @@ GetOptions(
         "s"   => \$opt_s, "selftest"      => \$opt_s,
         "v"   => \$opt_v, "version"       => \$opt_v,
         "w=s" => \$opt_w, "warn=s"        => \$opt_w,
+			  "skip-self-assessment" => \$opt_skip_sa,
 );
 
 if ($opt_v) {
@@ -261,32 +263,34 @@ foreach $device ( split(":",$device) ){
 			if($line =~ /$line_str_scsi(.+)/){
 				$found_status = 1;
 				$output_mode = "scsi";
-				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				warn "(debug) parsing line:\n$line\n" if $opt_debug;
 				if ($1 eq $ok_str_scsi) {
-					warn "(debug) found string '$ok_str_scsi'; status OK\n\n" if $opt_debug;
+					warn "(debug) found string '$ok_str_scsi'; status OK\n" if $opt_debug;
 				}
 				else {
-					warn "(debug) no '$ok_str_scsi' status; failing\n\n" if $opt_debug;
-					push(@error_messages, "Health status: $1");
-					escalate_status('CRITICAL');
+					warn "(debug) no '$ok_str_scsi' status; failing\n" if $opt_debug;
+					warn "(debug) no '$ok_str_scsi' status; failing but ignoring" if $opt_debug && $opt_skip_sa;
+					push(@error_messages, "Health status: $1") unless $opt_skip_sa;
+					escalate_status('CRITICAL') unless $opt_skip_sa;
 				}
 			}
 			elsif($line =~ /$line_str_ata(.+)/){
 				$found_status = 1;
 				if ($interface eq 'nvme') {
 					$output_mode = "nvme";
-					warn "(debug) setting output mode to nvme\n\n" if $opt_debug;
+					warn "(debug) setting output mode to nvme\n" if $opt_debug;
 				} else {
 					$output_mode = "ata";
 				}
-				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
+				warn "(debug) parsing line:\n$line\n" if $opt_debug;
 				if ($1 eq $ok_str_ata) {
-					warn "(debug) found string '$ok_str_ata'; status OK\n\n" if $opt_debug;
+					warn "(debug) found string '$ok_str_ata'; status OK\n" if $opt_debug;
 				}
 				else {
-					warn "(debug) no '$ok_str_ata' status; failing\n\n" if $opt_debug;
-					push(@error_messages, "Health status: $1");
-					escalate_status('CRITICAL');
+					warn "(debug) no '$ok_str_ata' status; failing\n" if $opt_debug;
+					warn "(debug) no '$ok_str_ata' status; failing but ignoring\n" if $opt_debug && $opt_skip_sa;
+					push(@error_messages, "Health status: $1") unless $opt_skip_sa;
+					escalate_status('CRITICAL') unless $opt_skip_sa;
 				}
 			}
 			if($line =~ /$line_model_ata(.+)/){
@@ -752,7 +756,8 @@ sub print_help {
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";
         print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to checks\n";
         print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
-        print "  -s/--selftest: Enable self-test log check";
+        print "  -s/--selftest: Enable self-test log check\n";
+        print "  --skip-self-assessment: Skip SMART self-assessment health status check\n";
         print "  -h/--help: this help\n";
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";

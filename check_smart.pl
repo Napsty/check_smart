@@ -751,7 +751,7 @@ sub print_help {
         print "  -i/--interface: device's interface type (auto|ata|scsi|nvme|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -r/--raw Comma separated list of ATA or NVMe attributes to check\n";
-        print "       ATA default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block\n";
+        print "       ATA default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Command_Timeout\n";
         print "       NVMe default: Media_and_Data_Integrity_Errors\n";
         print "  -b/--bad: Threshold value for Current_Pending_Sector for ATA and 'grown defect list' for SCSI drives\n";
         print "  -w/--warn Comma separated list of thresholds for ATA drives (e.g. Reallocated_Sector_Ct=10,Current_Pending_Sector=62)\n";

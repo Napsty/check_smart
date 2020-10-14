@@ -43,7 +43,8 @@
 # Dec 4, 2019: Ander Punnar - Fix 'deprecation warning on regex with curly brackets' (6.6.1)
 # Mar 25, 2020: Claudio Kuenzler - Add support for NVMe devices (6.7.0)
 # Jun 2, 2020: Claudio Kuenzler - Bugfix to make --warn work (6.7.1)
-# Oct 2, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
+# Oct 14, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
+# Oct 14, 2020: Claudio Kuenzler - Add Command_Timeout to default raw list (6.8.0)
 
 use strict;
 use Getopt::Long;
@@ -182,7 +183,7 @@ my @exclude_perfdata = split /,/, $opt_E // '';
 push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
-my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count';
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count,Command_Timeout';
 my @raw_check_list = split /,/, $raw_check_list;
 
 # raw check list for nvme

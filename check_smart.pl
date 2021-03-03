@@ -45,14 +45,15 @@
 # Jun 2, 2020: Claudio Kuenzler - Bugfix to make --warn work (6.7.1)
 # Oct 14, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
 # Oct 14, 2020: Claudio Kuenzler - Add Command_Timeout to default raw list (6.8.0)
-# Nov 11, 2020: Evan Felix - Allow use of : in pathnames so /dev/disk/by-path/ device names work
+# Mar 3, 2021: Evan Felix - Allow use of colons in pathnames so /dev/disk/by-path/ device names work (6.9.0)
+# Mar 3, 2021: Claudio Kuenzler - Add SSD attribute 202 Percent_Lifetime_Remain to default raw list (6.9.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.8.0';
+my $revision = '6.9.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -184,7 +185,7 @@ my @exclude_perfdata = split /,/, $opt_E // '';
 push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
-my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count,Command_Timeout';
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count,Percent_Lifetime_Remain';
 my @raw_check_list = split /,/, $raw_check_list;
 
 # raw check list for nvme
@@ -192,7 +193,7 @@ my $raw_check_list_nvme = $opt_r // 'Media_and_Data_Integrity_Errors';
 my @raw_check_list_nvme = split /,/, $raw_check_list_nvme;
 
 # warning threshold list (for raw checks)
-my $warn_list = $opt_w // '';
+my $warn_list = $opt_w // 'Percent_Lifetime_Remain=90';
 my @warn_list = split /,/, $warn_list;
 my %warn_list;
 my $warn_key;

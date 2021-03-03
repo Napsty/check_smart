@@ -45,6 +45,7 @@
 # Jun 2, 2020: Claudio Kuenzler - Bugfix to make --warn work (6.7.1)
 # Oct 14, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
 # Oct 14, 2020: Claudio Kuenzler - Add Command_Timeout to default raw list (6.8.0)
+# Nov 11, 2020: Evan Felix - Allow use of : in pathnames so /dev/disk/by-path/ device names work
 
 use strict;
 use Getopt::Long;
@@ -112,7 +113,7 @@ if ($opt_d || $opt_g ) {
         foreach my $opt_dl (@dev){
             warn "Found $opt_dl\n" if $opt_debug;
             if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/\/dev\/bus\/\d/) {
-                $device .= $opt_dl.":";
+                $device .= $opt_dl."|";
 
             } else {
                 warn "$opt_dl is not a valid block/character special device!\n\n" if $opt_debug;
@@ -133,23 +134,23 @@ if ($opt_d || $opt_g ) {
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
-              $interface .= "megaraid," . $k . ":";
+              $interface .= "megaraid," . $k . "|";
             }
           }
           elsif($interface =~ m/3ware,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
-              $interface .= "3ware," . $k . ":";
+              $interface .= "3ware," . $k . "|";
             }
           }
           elsif($interface =~ m/cciss,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
-              $interface .= "cciss," . $k . ":";
+              $interface .= "cciss," . $k . "|";
             }
           }
           else {
-            $interface .= ":";
+            $interface .= "|";
           }
         } else {
                 print "invalid interface $opt_i for $opt_d!\n\n";
@@ -210,9 +211,8 @@ my @drives_status_okay;
 my @drives_status_not_okay;
 my $drive_details;
 
-
-foreach $device ( split(":",$device) ){
-	foreach $interface ( split(":",$interface) ){
+foreach $device ( split("\\|",$device) ){
+	foreach $interface ( split("\\|",$interface) ){
 		my @error_messages = qw//;
 		my($status_string_local)='';
 		my($tag,$label);

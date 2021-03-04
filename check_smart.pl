@@ -196,7 +196,7 @@ my @raw_check_list_nvme = split /,/, $raw_check_list_nvme;
 
 # warning threshold list (for raw checks)
 my $warn_list = $opt_w // '';
-my $warn_list = $opt_w // 'Percent_Lifetime_Remain=90' if $opt_l;
+$warn_list = $opt_w // 'Percent_Lifetime_Remain=90' if $opt_l;
 my @warn_list = split /,/, $warn_list;
 my %warn_list;
 my $warn_key;

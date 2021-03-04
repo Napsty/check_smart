@@ -46,7 +46,7 @@
 # Oct 14, 2020: Claudio Kuenzler - Allow skip self-assessment check (--skip-self-assessment) (6.8.0)
 # Oct 14, 2020: Claudio Kuenzler - Add Command_Timeout to default raw list (6.8.0)
 # Mar 3, 2021: Evan Felix - Allow use of colons in pathnames so /dev/disk/by-path/ device names work (6.9.0)
-# Mar 3, 2021: Claudio Kuenzler - Add SSD attribute 202 Percent_Lifetime_Remain to default raw list (6.9.0)
+# Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 
 use strict;
 use Getopt::Long;
@@ -63,7 +63,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_skip_sa);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -79,6 +79,7 @@ GetOptions(
         "s"   => \$opt_s, "selftest"      => \$opt_s,
         "v"   => \$opt_v, "version"       => \$opt_v,
         "w=s" => \$opt_w, "warn=s"        => \$opt_w,
+        "l"   => \$opt_l, "ssd-lifetime"  => \$opt_l,
 			  "skip-self-assessment" => \$opt_skip_sa,
 );
 
@@ -185,15 +186,17 @@ my @exclude_perfdata = split /,/, $opt_E // '';
 push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
-my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count,Percent_Lifetime_Remain';
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count';
 my @raw_check_list = split /,/, $raw_check_list;
+push @raw_check_list, 'Percent_Lifetime_Remain' if $opt_l;
 
 # raw check list for nvme
 my $raw_check_list_nvme = $opt_r // 'Media_and_Data_Integrity_Errors';
 my @raw_check_list_nvme = split /,/, $raw_check_list_nvme;
 
 # warning threshold list (for raw checks)
-my $warn_list = $opt_w // 'Percent_Lifetime_Remain=90';
+my $warn_list = $opt_w // '';
+my $warn_list = $opt_w // 'Percent_Lifetime_Remain=90' if $opt_l;
 my @warn_list = split /,/, $warn_list;
 my %warn_list;
 my $warn_key;
@@ -759,6 +762,7 @@ sub print_help {
         print "  -e/--exclude: Comma separated list of SMART attribute names or numbers which should be excluded (=ignored) with regard to checks\n";
         print "  -E/--exclude-all: Comma separated list of SMART attribute names or numbers which should be completely ignored for checks as well as perfdata\n";
         print "  -s/--selftest: Enable self-test log check\n";
+        print "  -l/--ssd-lifetime: Check attribute 'Percent_Lifetime_Remain' available on some SSD drives\n";
         print "  --skip-self-assessment: Skip SMART self-assessment health status check\n";
         print "  -h/--help: this help\n";
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";

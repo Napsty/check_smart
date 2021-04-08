@@ -47,7 +47,7 @@
 # Oct 14, 2020: Claudio Kuenzler - Add Command_Timeout to default raw list (6.8.0)
 # Mar 3, 2021: Evan Felix - Allow use of colons in pathnames so /dev/disk/by-path/ device names work (6.9.0)
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
-# Mar 17, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
+# Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 
 use strict;
 use Getopt::Long;

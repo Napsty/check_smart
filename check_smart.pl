@@ -48,13 +48,14 @@
 # Mar 3, 2021: Evan Felix - Allow use of colons in pathnames so /dev/disk/by-path/ device names work (6.9.0)
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
+# May 25, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.9.1';
+my $revision = '6.10.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -132,7 +133,7 @@ if ($opt_d || $opt_g ) {
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
 
-        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|cciss|megaraid|sat|auto|nvme)/) {
+        if ($opt_i =~ m/(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme)/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
@@ -150,6 +151,12 @@ if ($opt_d || $opt_g ) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "cciss," . $k . "|";
+            }
+          }
+          elsif($interface =~ m/aacraid,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "aacraid," . $k . "|";
             }
           }
           else {
@@ -227,7 +234,7 @@ foreach $device ( split("\\|",$device) ){
 			# we had a pattern based on $opt_g
 			$tag   = $device;
 			$tag   =~ s/\Q$opt_g\E//;
-                        if($interface =~ qr/(?:megaraid|3ware|cciss)/){ 
+                        if($interface =~ qr/(?:megaraid|3ware|aacraid|cciss)/){
 			  $label = "[$interface] - "; 
                         } else {
 			  $label = "[$device] - ";
@@ -743,7 +750,7 @@ sub print_revision {
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device glob>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device glob>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|aacraid,H,L,ID|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a glob pattern name of physical devices to be SMART monitored\n";
@@ -753,7 +760,7 @@ sub print_help {
         print "Note that -g only works with a fixed interface (e.g. scsi, ata) and megaraid,N.\n";
         print "\n";
         print "Other options\n";
-        print "  -i/--interface: device's interface type (auto|ata|scsi|nvme|3ware,N|areca,N|hpt,L/M/N|cciss,N|megaraid,N)\n";
+        print "  -i/--interface: device's interface type (auto|ata|scsi|nvme|3ware,N|areca,N|hpt,L/M/N|aacraid,H,L,ID|cciss,N|megaraid,N)\n";
         print "  (See http://www.smartmontools.org/wiki/Supported_RAID-Controllers for interface convention)\n";
         print "  -r/--raw Comma separated list of ATA or NVMe attributes to check\n";
         print "       ATA default: Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Command_Timeout\n";

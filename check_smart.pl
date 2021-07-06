@@ -48,7 +48,7 @@
 # Mar 3, 2021: Evan Felix - Allow use of colons in pathnames so /dev/disk/by-path/ device names work (6.9.0)
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
-# May 25, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
+# Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 
 use strict;
 use Getopt::Long;

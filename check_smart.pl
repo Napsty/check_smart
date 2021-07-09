@@ -49,6 +49,7 @@
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
+# TBD, 2021: Claudio Kuenzler - Handle dots in NVMe attributes, prioritize CRITICAL before WARNING (6.11.0)
 
 use strict;
 use Getopt::Long;
@@ -226,6 +227,7 @@ my $drive_details;
 foreach $device ( split("\\|",$device) ){
 	foreach $interface ( split("\\|",$interface) ){
 		my @error_messages = qw//;
+		my @warning_messages = qw//;
 		my($status_string_local)='';
 		my($tag,$label);
 		$exit_status_local = 'OK';
@@ -371,7 +373,7 @@ foreach $device ( split("\\|",$device) ){
 			escalate_status('UNKNOWN');
 		}
 		if ($return_code & 0x04) {
-			push(@error_messages, 'Checksum failure');
+			push(@warning_messages, 'Checksum failure');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x08) {
@@ -379,19 +381,19 @@ foreach $device ( split("\\|",$device) ){
 			escalate_status('CRITICAL');
 		}
 		if ($return_code & 0x10) {
-			push(@error_messages, 'Disk is in prefail');
+			push(@warning_messages, 'Disk is in prefail');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x20) {
-			push(@error_messages, 'Disk may be close to failure');
+			push(@warning_messages, 'Disk may be close to failure');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x40) {
-			push(@error_messages, 'Error log contains errors');
+			push(@warning_messages, 'Error log contains errors');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x80) {
-			push(@error_messages, 'Self-test log contains errors');
+			push(@warning_messages, 'Self-test log contains errors');
 			escalate_status('WARNING');
 		}
 		if ($return_code && !$exit_status_local) {
@@ -413,7 +415,7 @@ foreach $device ( split("\\|",$device) ){
 			warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
 			if ($return_code > 0) {
-				push(@error_messages, 'Self-test log contains errors');
+				push(@warning_messages, 'Self-test log contains errors');
 				warn "(debug) Self-test log contains errors\n\n" if $opt_debug;
 				escalate_status('WARNING');
 			}
@@ -456,7 +458,7 @@ foreach $device ( split("\\|",$device) ){
 					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_checks) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
-					push(@error_messages, "Attribute $attribute_name failed at $when_failed");
+					push(@warning_messages, "Attribute $attribute_name failed at $when_failed");
 					escalate_status('WARNING');
 					warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
 					}
@@ -480,15 +482,15 @@ foreach $device ( split("\\|",$device) ){
 				      # Check for warning thresholds
 				      if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
 				        warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-				        push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+				        push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
 				        escalate_status('WARNING');
 				      } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
 					warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
-					push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					push(@warning_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
 				      }
 				      else {
 				        warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-				        push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+				        push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
 				        escalate_status('WARNING');
 				      }
 				    } else {
@@ -506,6 +508,7 @@ foreach $device ( split("\\|",$device) ){
 				my ($attribute_name, $raw_value) = ($1, $2);
 				$raw_value =~ s/\s|,//g;
 				$attribute_name =~ s/\s/_/g;
+				$attribute_name =~ s/.//g;
 
 				# some attributes produce irrelevant data; no need to graph them
 				if (grep {$_ eq $attribute_name} ('Critical_Warning') ){
@@ -525,67 +528,67 @@ foreach $device ( split("\\|",$device) ){
 				# Handle Critical_Warning values
 				if ($attribute_name eq 'Critical_Warning') {
 					if ($raw_value eq '0x01') {
-					  push(@error_messages, "Available spare below threshold");
+					  push(@warning_messages, "Available spare below threshold");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x02') {
-					  push(@error_messages, "Temperature is above or below thresholds");
+					  push(@warning_messages, "Temperature is above or below thresholds");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x03') {
-					  push(@error_messages, "Available spare below threshold and temperature is above or below thresholds");
+					  push(@warning_messages, "Available spare below threshold and temperature is above or below thresholds");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x04') {
-					  push(@error_messages, "NVM subsystem reliability degraded");
+					  push(@warning_messages, "NVM subsystem reliability degraded");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x05') {
-					  push(@error_messages, "Available spare below threshold and NVM subsystem reliability degraded");
+					  push(@warning_messages, "Available spare below threshold and NVM subsystem reliability degraded");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x06') {
-					  push(@error_messages, "Temperature is above or below thresholds and NVM subsystem reliability degraded");
+					  push(@warning_messages, "Temperature is above or below thresholds and NVM subsystem reliability degraded");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x07') {
-					  push(@error_messages, "Available spare below threshold and Temperature is above or below thresholds and NVM subsystem reliability degraded");
+					  push(@warning_messages, "Available spare below threshold and Temperature is above or below thresholds and NVM subsystem reliability degraded");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x08') {
-					  push(@error_messages, "Media in read only mode");
+					  push(@warning_messages, "Media in read only mode");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x09') {
-					  push(@error_messages, "Media in read only mode and Available spare below threshold");
+					  push(@warning_messages, "Media in read only mode and Available spare below threshold");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0A') {
-					  push(@error_messages, "Media in read only mode and Temperature is above or below thresholds");
+					  push(@warning_messages, "Media in read only mode and Temperature is above or below thresholds");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0B') {
-					  push(@error_messages, "Media in read only mode and Temperature is above or below thresholds and Available spare below threshold");
+					  push(@warning_messages, "Media in read only mode and Temperature is above or below thresholds and Available spare below threshold");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0C') {
-					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded");
+					  push(@warning_messages, "Media in read only mode and NVM subsystem reliability degraded");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0D') {
-					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Available spare below threshold");
+					  push(@warning_messages, "Media in read only mode and NVM subsystem reliability degraded and Available spare below threshold");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0E') {
-					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
+					  push(@warning_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x0F') {
-					  push(@error_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
+					  push(@warning_messages, "Media in read only mode and NVM subsystem reliability degraded and Temperature is above or below thresholds");
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x10') {
-					  push(@error_messages, "Volatile memory backup device failed");
+					  push(@warning_messages, "Volatile memory backup device failed");
 				          escalate_status('WARNING');
 					}
 				}
@@ -596,14 +599,14 @@ foreach $device ( split("\\|",$device) ){
 					  # Check for warning thresholds
 					  if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
 					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
 					    escalate_status('WARNING');
 					  } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
 					    warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					    push(@warning_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
 					  } else {
 					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
-					    push(@error_messages, "$attribute_name is non-zero ($raw_value)");
+					    push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
 					    escalate_status('WARNING');
 					  }
 				       } else {
@@ -634,19 +637,19 @@ foreach $device ( split("\\|",$device) ){
 					if ($opt_b) {
 						push (@perfdata, "defect_list=$defectlist;;$opt_b") if $opt_d;
 						if (($defectlist > 0) && ($defectlist >= $opt_b)) {
-							push(@error_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
+							push(@warning_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
 							escalate_status('WARNING');
 							warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
 						}
 						elsif (($defectlist > 0) && ($defectlist < $opt_b)) {
-							push(@error_messages, "Note: $defectlist Elements in grown defect list");
+							push(@warning_messages, "Note: $defectlist Elements in grown defect list");
 							warn "(debug) Elements in grown defect list is non-zero ($defectlist) but less than $opt_b\n\n" if $opt_debug;
 						}
 					}
 					else {
 						if ($defectlist > 0) {
 							push (@perfdata, "defect_list=$defectlist") if $opt_d;
-							push(@error_messages, "$defectlist Elements in grown defect list");
+							push(@warning_messages, "$defectlist Elements in grown defect list");
 							escalate_status('WARNING');
 							warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
 						}
@@ -674,7 +677,7 @@ foreach $device ( split("\\|",$device) ){
 					push (@perfdata, "start_stop=$current_start_stop;$max_start_stop") if $opt_d;
 					if($current_start_stop > $max_start_stop){
 						warn "(debug) Disk start_stop is greater than max ($current_start_stop > $max_start_stop)\n\n" if $opt_debug;
-						push(@error_messages, 'Disk start_stop is higher than maximum');
+						push(@warning_messages, 'Disk start_stop is higher than maximum');
 						escalate_status('WARNING');
 					}
 				}
@@ -693,10 +696,12 @@ foreach $device ( split("\\|",$device) ){
 		if($exit_status_local ne 'OK'){
 		  if ($opt_g) {
 			$status_string = $label.join(', ', @error_messages);
+			$status_string = $label.join(', ', @warning_messages);
 		  }
 		  else {
 			$drive_details = "Drive $model S/N $serial: ";
 			$status_string = join(', ', @error_messages);
+			$status_string = join(', ', @warning_messages);
 		  }
 		  push @drives_status_not_okay, $status_string;
 		} 
@@ -707,6 +712,7 @@ foreach $device ( split("\\|",$device) ){
 		  else {
 			$drive_details = "Drive $model S/N $serial: no SMART errors detected. ";
 			$status_string = join(', ', @error_messages);
+			$status_string = join(', ', @warning_messages);
 		  }
 		  push @drives_status_okay, $status_string;
 		}

@@ -696,12 +696,12 @@ foreach $device ( split("\\|",$device) ){
 		if($exit_status_local ne 'OK'){
 		  if ($opt_g) {
 			$status_string = $label.join(', ', @error_messages);
-			$status_string = $label.join(', ', @warning_messages);
+			$status_string .= $label.join(', ', @warning_messages);
 		  }
 		  else {
 			$drive_details = "Drive $model S/N $serial: ";
 			$status_string = join(', ', @error_messages);
-			$status_string = join(', ', @warning_messages);
+			$status_string .= join(', ', @warning_messages);
 		  }
 		  push @drives_status_not_okay, $status_string;
 		} 
@@ -712,7 +712,7 @@ foreach $device ( split("\\|",$device) ){
 		  else {
 			$drive_details = "Drive $model S/N $serial: no SMART errors detected. ";
 			$status_string = join(', ', @error_messages);
-			$status_string = join(', ', @warning_messages);
+			$status_string .= join(', ', @warning_messages);
 		  }
 		  push @drives_status_okay, $status_string;
 		}

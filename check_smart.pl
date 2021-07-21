@@ -704,10 +704,16 @@ foreach $device ( split("\\|",$device) ){
 			$status_string .= join(', ', @warning_messages);
 		  }
 		  push @drives_status_not_okay, $status_string;
-		} 
+		}
 		else {
 		  if ($opt_g) {
 			$status_string = $label."Device is clean";
+			if (scalar(@error_messages) > 0) {
+				$status_string .= " ".$label.join(', ', @error_messages);
+			}
+			if (scalar(@warning_messages) > 0) {
+				$status_string .= " ".$label.join(', ', @warning_messages);
+			}
 		  }
 		  else {
 			$drive_details = "Drive $model S/N $serial: no SMART errors detected. ";

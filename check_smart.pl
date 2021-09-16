@@ -49,7 +49,7 @@
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
-# TBD, 2021: Claudio Kuenzler - Handle dots in NVMe attributes, prioritize CRITICAL before WARNING (6.11.0)
+# TBD, 2021: Claudio Kuenzler - Handle dots in NVMe attributes, prioritize CRITICAL before WARNING and NOTICE (6.11.0)
 
 use strict;
 use Getopt::Long;
@@ -222,12 +222,15 @@ if ($opt_b) {
 
 my @drives_status_okay;
 my @drives_status_not_okay;
+my @drives_status_warning;
+my @drives_status_critical;
 my $drive_details;
 
 foreach $device ( split("\\|",$device) ){
 	foreach $interface ( split("\\|",$interface) ){
 		my @error_messages = qw//;
 		my @warning_messages = qw//;
+		my @notice_messages = qw//;
 		my($status_string_local)='';
 		my($tag,$label);
 		$exit_status_local = 'OK';
@@ -486,7 +489,7 @@ foreach $device ( split("\\|",$device) ){
 				        escalate_status('WARNING');
 				      } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
 					warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
-					push(@warning_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					push(@notice_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
 				      }
 				      else {
 				        warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
@@ -603,7 +606,7 @@ foreach $device ( split("\\|",$device) ){
 					    escalate_status('WARNING');
 					  } elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
 					    warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
-					    push(@warning_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+					    push(@notice_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
 					  } else {
 					    warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
 					    push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
@@ -697,13 +700,19 @@ foreach $device ( split("\\|",$device) ){
 		  if ($opt_g) {
 			$status_string = $label.join(', ', @error_messages);
 			$status_string .= $label.join(', ', @warning_messages);
+			$status_string .= $label.join(', ', @notice_messages);
 		  }
 		  else {
 			$drive_details = "Drive $model S/N $serial: ";
-			$status_string = join(', ', @error_messages);
-			$status_string .= join(', ', @warning_messages);
+			$status_string = join(', ', @error_messages, '');
+			$status_string .= join(', ', @warning_messages, '');
+			$status_string .= join(', ', @notice_messages);
 		  }
-		  push @drives_status_not_okay, $status_string;
+		  if ($exit_status_local eq 'WARNING') {
+		    push @drives_status_warning, $status_string;
+		  } elsif ($exit_status_local eq 'CRITICAL') {
+		    push @drives_status_critical, $status_string;
+		  }
 		}
 		else {
 		  if ($opt_g) {
@@ -714,11 +723,15 @@ foreach $device ( split("\\|",$device) ){
 			if (scalar(@warning_messages) > 0) {
 				$status_string .= " ".$label.join(', ', @warning_messages);
 			}
+			if (scalar(@notice_messages) > 0) {
+				$status_string .= " ".$label.join(', ', @notice_messages);
+			}
 		  }
 		  else {
 			$drive_details = "Drive $model S/N $serial: no SMART errors detected. ";
 			$status_string = join(', ', @error_messages);
 			$status_string .= join(', ', @warning_messages);
+			$status_string .= join(', ', @notice_messages);
 		  }
 		  push @drives_status_okay, $status_string;
 		}
@@ -728,6 +741,14 @@ foreach $device ( split("\\|",$device) ){
 warn "(debug) final status/output: $exit_status\n" if $opt_debug;
 
 my @msg_list = ($drive_details) if $drive_details;
+
+if (scalar(@drives_status_critical) > 0) {
+  push @drives_status_not_okay, @drives_status_critical;
+}
+
+if (scalar(@drives_status_warning) > 0) {
+  push @drives_status_not_okay, @drives_status_warning;
+}
 
 if (@drives_status_not_okay) {
 	push @msg_list, grep { $_ } @drives_status_not_okay;

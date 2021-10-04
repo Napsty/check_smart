@@ -49,7 +49,7 @@
 # Mar 4, 2021: Claudio Kuenzler - Add SSD attribute Percent_Lifetime_Remain check (-l|--ssd-lifetime) (6.9.0)
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
-# Oct 4, 2021: Claudio Kuenzler - Handle dots in NVMe attributes, prioritize CRITICAL before WARNING and NOTICE (6.11.0)
+# Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
 
 use strict;
 use Getopt::Long;

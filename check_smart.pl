@@ -50,13 +50,14 @@
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 # Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
+# Oct 15, 2021: Claudio Kuenzler - Security fix in trailing path for pseudo-devices (6.11.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.11.0';
+my $revision = '6.11.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -117,7 +118,7 @@ if ($opt_d || $opt_g ) {
 
         foreach my $opt_dl (@dev){
             warn "Found $opt_dl\n" if $opt_debug;
-            if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d/) {
+            if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
                 $device .= $opt_dl."|";
 
             } else {

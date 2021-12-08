@@ -50,7 +50,7 @@
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 # Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
-# Oct 15, 2021: Claudio Kuenzler - Security fix in trailing path for pseudo-devices (6.11.1)
+# TBD Claudio Kuenzler - Security fix in trailing path for pseudo-devices, add Erase_Fail_Count_Total (6.12.0)
 
 use strict;
 use Getopt::Long;
@@ -196,7 +196,7 @@ my @exclude_perfdata = split /,/, $opt_E // '';
 push(@exclude_checks, @exclude_perfdata);
 
 # raw check list
-my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count';
+my $raw_check_list = $opt_r // 'Current_Pending_Sector,Reallocated_Sector_Ct,Program_Fail_Cnt_Total,Uncorrectable_Error_Cnt,Offline_Uncorrectable,Runtime_Bad_Block,Reported_Uncorrect,Reallocated_Event_Count,Erase_Fail_Count_Total';
 my @raw_check_list = split /,/, $raw_check_list;
 push @raw_check_list, 'Percent_Lifetime_Remain' if $opt_l;
 

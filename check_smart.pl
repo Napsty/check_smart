@@ -50,14 +50,14 @@
 # Apr 8, 2021: Claudio Kuenzler - Fix regex for pseudo-devices (6.9.1)
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 # Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
-# TBD Claudio Kuenzler - Security fix in trailing path for pseudo-devices, add Erase_Fail_Count_Total (6.12.0)
+# TBD Claudio Kuenzler - Sec fix in path for pseudo-devices, add Erase_Fail_Count_Total, fix NVMe perfdata (6.12.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.11.1';
+my $revision = '6.12.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -442,7 +442,8 @@ foreach $device ( split("\\|",$device) ){
 		@output = `$full_command`;
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
-		warn "(debug) Raw Check List: $raw_check_list\n" if $opt_debug;
+		warn "(debug) Raw Check List ATA: $raw_check_list\n" if $opt_debug;
+		warn "(debug) Raw Check List NVMe: $raw_check_list_nvme\n" if $opt_debug;
 		warn "(debug) Exclude List for Checks: ", join(",", @exclude_checks), "\n" if $opt_debug;
 		warn "(debug) Exclude List for Perfdata: ", join(",", @exclude_perfdata), "\n" if $opt_debug;
 		warn "(debug) Warning Thresholds:\n" if $opt_debug;
@@ -512,7 +513,7 @@ foreach $device ( split("\\|",$device) ){
 				my ($attribute_name, $raw_value) = ($1, $2);
 				$raw_value =~ s/\s|,//g;
 				$attribute_name =~ s/\s/_/g;
-				$attribute_name =~ s/.//g;
+				$attribute_name =~ s/\.//g;
 
 				# some attributes produce irrelevant data; no need to graph them
 				if (grep {$_ eq $attribute_name} ('Critical_Warning') ){

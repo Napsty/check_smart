@@ -51,13 +51,14 @@
 # Jul 6, 2021: Bernhard Bittner - Add aacraid devices (6.10.0)
 # Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
 # Dec 10, 2021: Claudio Kuenzler - Sec fix in path for pseudo-devices, add Erase_Fail_Count_Total, fix NVMe perfdata (6.12.0)
+# Dec 10, 2021: Claudio Kuenzler - Bugfix in interface handling (6.12.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.12.0';
+my $revision = '6.12.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -135,7 +136,7 @@ if ($opt_d || $opt_g ) {
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
 
-        if ($opt_i =~ m/^(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme)$/) {
+        if ($opt_i =~ m/^(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme)/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";

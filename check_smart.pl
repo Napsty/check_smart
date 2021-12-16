@@ -101,7 +101,8 @@ if ($opt_h) {
 my ($device, $interface) = qw// // '';
 if ($opt_d || $opt_g ) {
         unless($opt_i){
-                print "must specify an interface for $opt_d using -i/--interface!\n\n";
+				print "must specify an interface for $opt_d using -i/--interface!\n\n" if $opt_d;
+                print "must specify an interface for $opt_g using -i/--interface!\n\n" if $opt_g;
                 print_help();
                 exit $ERRORS{'UNKNOWN'};
         }

@@ -52,13 +52,14 @@
 # Oct 4, 2021: Claudio Kuenzler + Peter Newman - Handle dots in NVMe attributes, prioritize (order) alerts (6.11.0)
 # Dec 10, 2021: Claudio Kuenzler - Sec fix in path for pseudo-devices, add Erase_Fail_Count_Total, fix NVMe perfdata (6.12.0)
 # Dec 10, 2021: Claudio Kuenzler - Bugfix in interface handling (6.12.1)
+# Dec 16, 2021: Lorenz Kaestle - Bugfix when interface parameter was missing in combination with -g (6.12.2)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.12.1';
+my $revision = '6.12.2';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);

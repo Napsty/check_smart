@@ -814,6 +814,7 @@ sub print_help {
         print "  -s/--selftest: Enable self-test log check\n";
         print "  -l/--ssd-lifetime: Check attribute 'Percent_Lifetime_Remain' available on some SSD drives\n";
         print "  --skip-self-assessment: Skip SMART self-assessment health status check\n";
+        print "  --skip-temp-check: Skip temperature comparison current vs. drive max temperature\n";
         print "  -h/--help: this help\n";
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";

@@ -53,13 +53,14 @@
 # Dec 10, 2021: Claudio Kuenzler - Sec fix in path for pseudo-devices, add Erase_Fail_Count_Total, fix NVMe perfdata (6.12.0)
 # Dec 10, 2021: Claudio Kuenzler - Bugfix in interface handling (6.12.1)
 # Dec 16, 2021: Lorenz Kaestle - Bugfix when interface parameter was missing in combination with -g (6.12.2)
+# Apr 22, 2022: Claudio Kuenzler - Allow skip temperature check (--skip-temp-check) (6.13.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.12.2';
+my $revision = '6.13.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -69,7 +70,7 @@ $ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -87,6 +88,7 @@ GetOptions(
         "w=s" => \$opt_w, "warn=s"        => \$opt_w,
         "l"   => \$opt_l, "ssd-lifetime"  => \$opt_l,
 			  "skip-self-assessment" => \$opt_skip_sa,
+			  "skip-temp-check" => \$opt_skip_temp,
 );
 
 if ($opt_v) {
@@ -102,7 +104,7 @@ if ($opt_h) {
 my ($device, $interface) = qw// // '';
 if ($opt_d || $opt_g ) {
         unless($opt_i){
-				print "must specify an interface for $opt_d using -i/--interface!\n\n" if $opt_d;
+                print "must specify an interface for $opt_d using -i/--interface!\n\n" if $opt_d;
                 print "must specify an interface for $opt_g using -i/--interface!\n\n" if $opt_g;
                 print_help();
                 exit $ERRORS{'UNKNOWN'};
@@ -670,10 +672,12 @@ foreach $device ( split("\\|",$device) ){
 			if($current_temperature){
 				if($max_temperature){
 					push (@perfdata, "temperature=$current_temperature;;$max_temperature") if $opt_d;
-					if($current_temperature > $max_temperature){
-						warn "(debug) Disk temperature is greater than max ($current_temperature > $max_temperature)\n\n" if $opt_debug;
-						push(@error_messages, 'Disk temperature is higher than maximum');
-						escalate_status('CRITICAL');
+					unless($opt_skip_temp) {
+						if($current_temperature > $max_temperature){
+							warn "(debug) Disk temperature is greater than max ($current_temperature > $max_temperature)\n\n" if $opt_debug;
+							push(@error_messages, 'Disk temperature is higher than maximum');
+							escalate_status('CRITICAL');
+						}
 					}
 				}
 				else{

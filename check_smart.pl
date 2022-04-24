@@ -793,6 +793,7 @@ sub print_help {
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a glob pattern name of physical devices to be SMART monitored\n";
         print "       Example: '/dev/sd[a-z]' will search for all /dev/sda until /dev/sdz devices and report errors globally.\n";
+        print "       Example: '/dev/sd*[a-z]' will search for all /dev/sda until /dev/sdzzzz etc devices and report errors globally.\n";
         print "       It is also possible to use -g in conjunction with megaraid devices. Example: -i 'megaraid,[0-3]'.\n";
         print "       Does not output performance data for historical value graphing.\n";
         print "Note that -g only works with a fixed interface (e.g. scsi, ata) and megaraid,N.\n";

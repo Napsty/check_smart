@@ -184,7 +184,7 @@ if ($device eq "") {
 my $smart_command = undef;
 foreach my $path (@sys_path) {
 	if (-x "$path/smartctl") {
-		$smart_command = 'sudo $path/smartctl';
+		$smart_command = "sudo $path/smartctl";
 		last;
 	}
 }

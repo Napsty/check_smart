@@ -65,7 +65,7 @@ my $revision = '6.12.2';
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
 
-$ENV{'PATH'}='/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin';
+my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
@@ -181,8 +181,19 @@ if ($device eq "") {
     exit $ERRORS{'UNKNOWN'};
 }
 
+my $smart_command = undef;
+foreach my $path (@sys_path) {
+	if (-x "$path/smartctl") {
+		$smart_command = "sudo $path/smartctl";
+		last;
+	}
+}
 
-my $smart_command = 'sudo smartctl';
+if (!defined($smart_command)) {
+	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
+	exit $ERRORS{'UNKNOWN'};
+}
+
 my $exit_status = 'OK';
 my $exit_status_local = 'OK';
 my $status_string = '';

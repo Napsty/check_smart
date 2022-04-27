@@ -190,7 +190,7 @@ foreach my $path (@sys_path) {
 }
 
 if (!defined($smart_command)) {
-	print "UNKNOWN - Could not find smartctl in " . join(", ", @sys_path) . "\n";
+	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
 	exit $ERRORS{'UNKNOWN'};
 }
 

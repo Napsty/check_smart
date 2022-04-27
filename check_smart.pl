@@ -53,7 +53,8 @@
 # Dec 10, 2021: Claudio Kuenzler - Sec fix in path for pseudo-devices, add Erase_Fail_Count_Total, fix NVMe perfdata (6.12.0)
 # Dec 10, 2021: Claudio Kuenzler - Bugfix in interface handling (6.12.1)
 # Dec 16, 2021: Lorenz Kaestle - Bugfix when interface parameter was missing in combination with -g (6.12.2)
-# Apr 22, 2022: Claudio Kuenzler - Allow skip temperature check (--skip-temp-check) (6.13.0)
+# Apr 27, 2022: Claudio Kuenzler - Allow skip temperature check (--skip-temp-check) (6.13.0)
+# Apr 27, 2022: Peter Newman - Better handling of missing or non-executable smartctl command (6.13.0)
 
 use strict;
 use Getopt::Long;

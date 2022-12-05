@@ -81,4 +81,4 @@ Single NVMe drive on Linux:
     OK: Drive Samsung SSD 970 PRO 512GB S/N XXXXXXXXXXXXXXX: no SMART errors detected. |Temperature=34 Available_Spare=100 Available_Spare_Threshold=10 Percentage_Used=0 Data_Units_Read=2854 Data_Units_Written=107590 Host_Read_Commands=67150 Host_Write_Commands=1406316 Controller_Busy_Time=20 Power_Cycles=16 Power_On_Hours=105 Unsafe_Shutdowns=6 Media_and_Data_Integrity_Errors=0 Error_Information_Log_Entries=0 Warning__Comp._Temperature_Time=0 Critical_Comp._Temperature_Time=0 Temperature_Sensor_1=34 Temperature_Sensor_2=33
 
 
-see https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for more examples
+see https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php for more usage examples

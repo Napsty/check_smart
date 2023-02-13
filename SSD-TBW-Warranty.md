@@ -1,5 +1,5 @@
 # TBW Warranty List of known SSD drives
-There are two factors relevant to warranty of SSD drives: The time since the SSD was bought (Warranty Time) and the Total Bytes Written (TBW) value. The warranty of a SSD drive is expired whenever one of these two values are reached. 
+There are two factors relevant to warranty of SSD drives: The time since the SSD was bought (Warranty Time) and the Total Bytes Written (TBW) value. The warranty of a SSD drive is expired whichever of these two factors is reached. 
 
 This table should help to have a quick overview of SSD drives and their (known) warrantly specifications. Based on this table (with sufficient data), the `check_smart.pl` plugin may detect expiring warranties in the future.
 

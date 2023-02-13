@@ -1,0 +1,28 @@
+# TBW Warranty List of known SSD drives
+There are two factors relevant to warranty of SSD drives: The time since the SSD was bought (Warranty Time) and the Total Bytes Written (TBW) value. The warranty of a SSD drive is expired whenever one of these two values are reached. 
+
+This table should help to have a quick overview of SSD drives and their (known) warrantly specifications. Based on this table (with sufficient data), the `check_smart.pl` plugin may detect expiring warranties in the future.
+
+Contributions welcome! ❤️
+
+## Overview of SSD drives and their warranty specifications
+ 
+| Vendor | Model | Product Name | Size/Capacity | Warranty Time | Endurance TBW | Links/References |
+|--------|-------|--------------|---------------|---------------|---------------|------------------|
+| <sub>Crucial</sb> | <sub>CT250MX500SSD1</sub> | <sub>Crucial MX500</sub> | <sub>250 GB</sub> | <sub>5 Years</sub> | <sub>100 TB</sub> | <sub>[Spec Sheet](https://content.crucial.com/content/dam/crucial/ssd-products/mx500/flyer/crucial-mx500-ssd-productflyer-en.pdf)</sub> |
+| <sub>Crucial</sb> | <sub>CT500MX500SSD1</sub> | <sub>Crucial MX500</sub> | <sub>500 GB</sub> | <sub>5 Years</sub> | <sub>180 TB</sub> | <sub>[Spec Sheet](https://content.crucial.com/content/dam/crucial/ssd-products/mx500/flyer/crucial-mx500-ssd-productflyer-en.pdf)</sub> |
+| <sub>Crucial</sb> | <sub>CT1000MX500SSD1</sub> | <sub>Crucial MX500</sub> | <sub>1 TB</sub> | <sub>5 Years</sub> | <sub>360 TB</sub> | <sub>[Spec Sheet](https://content.crucial.com/content/dam/crucial/ssd-products/mx500/flyer/crucial-mx500-ssd-productflyer-en.pdf)</sub> |
+| <sub>Crucial</sb> | <sub>CT2000MX500SSD1</sub> | <sub>Crucial MX500</sub> | <sub>2 TB</sub> | <sub>5 Years</sub> | <sub>700 TB</sub> | <sub>[Spec Sheet](https://content.crucial.com/content/dam/crucial/ssd-products/mx500/flyer/crucial-mx500-ssd-productflyer-en.pdf)</sub> |
+| <sub>Crucial</sb> | <sub>CT4000MX500SSD1</sub> | <sub>Crucial MX500</sub> | <sub>4 TB</sub> | <sub>5 Years</sub> | <sub>1000 TB</sub> | <sub>[Spec Sheet](https://content.crucial.com/content/dam/crucial/ssd-products/mx500/flyer/crucial-mx500-ssd-productflyer-en.pdf)</sub> |
+| <sub>SanDisk</sb> | <sub>SDSSDH31000G</sub> | <sub>SanDisk Ultra 3D SSD</sub> | <sub>1 TB</sub> | <sub>5 Years</sub> | <sub>400 TB</sub> | <sub>[Spec Sheet](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/sandisk/product/internal-drives/ultra-3d-sata-iii-ssd/datasheet-ultra-3d-sata-iii-ssd.pdf)</sub> |
+| <sub>SanDisk</sb> | <sub>SDSSDH32000G</sub> | <sub>SanDisk Ultra 3D SSD</sub> | <sub>2 TB</sub> | <sub>5 Years</sub> | <sub>500 TB</sub> | <sub>[Spec Sheet](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/sandisk/product/internal-drives/ultra-3d-sata-iii-ssd/datasheet-ultra-3d-sata-iii-ssd.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS120G1G0A</sub> | <sub>WD Green SSD (G1)</sub> | <sub>120 GB</sub> | <sub>3 Years</sub> | <sub>40 TB</sub> | <sub>[Spec Sheet](https://www.hye.co.il/Uploads/Products/Files/55/232828e4.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS120G2G0A</sub> | <sub>WD Green SSD (G2)</sub> | <sub>120 GB</sub> | <sub>3 Years</sub> | <sub>40 TB</sub> | <sub>[Devicelist](https://devicelist.best/en/wd-green-wds120g2g0a/)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS240G1G0A</sub> | <sub>WD Green SSD (G1)</sub> | <sub>240 GB</sub> | <sub>3 Years</sub> | <sub>80 TB</sub> | <sub>[Spec Sheet](https://www.hye.co.il/Uploads/Products/Files/55/232828e4.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS240G2G0A</sub> | <sub>WD Green SSD (G2)</sub> | <sub>240 GB</sub> | <sub>3 Years</sub> | <sub>80 TB</sub> | <sub>[Devicelist](https://devicelist.best/en/wd-green-wds120g2g0a/)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS100T2B0A</sub> | <sub>WD Blue 3D NAND SSD</sub> | <sub>1 TB</sub> | <sub>5 Years</sub> | <sub>400 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/product-brief-wd-blue-3d-nand-sata-ssd.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS200T2B0A</sub> | <sub>WD Blue 3D NAND SSD</sub> | <sub>2 TB</sub> | <sub>5 Years</sub> | <sub>500 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/product-brief-wd-blue-3d-nand-sata-ssd.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS500G1R0A</sub> | <sub>WD Red SA500 / NAS SSD</sub> | <sub>500 GB</sub> | <sub>5 Years</sub> | <sub>350 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/02-01-WW-04-00048.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS100T1R0A</sub> | <sub>WD Red SA500 / NAS SSD</sub> | <sub>1 TB</sub> | <sub>5 Years</sub> | <sub>600 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/02-01-WW-04-00048.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS200T1R0A</sub> | <sub>WD Red SA500 / NAS SSD</sub> | <sub>2 TB</sub> | <sub>5 Years</sub> | <sub>1300 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/02-01-WW-04-00048.pdf)</sub> |
+| <sub>Western Digital</sb> | <sub>WDS400T1R0A</sub> | <sub>WD Red SA500 / NAS SSD</sub> | <sub>4 TB</sub> | <sub>5 Years</sub> | <sub>2500 TB</sub> | <sub>[Spec Sheet](https://products.wdc.com/library/SpecSheet/ENG/02-01-WW-04-00048.pdf)</sub> |

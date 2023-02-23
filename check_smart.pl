@@ -242,6 +242,7 @@ my @drives_status_okay;
 my @drives_status_not_okay;
 my @drives_status_warning;
 my @drives_status_critical;
+my @drives_status_unknown;
 my $drive_details;
 
 foreach $device ( split("\\|",$device) ){
@@ -733,6 +734,8 @@ foreach $device ( split("\\|",$device) ){
 		    push @drives_status_warning, $status_string;
 		  } elsif ($exit_status_local eq 'CRITICAL') {
 		    push @drives_status_critical, $status_string;
+		  } elsif ($exit_status_local eq 'UNKNOWN') {
+		    push @drives_status_unknown, $status_string;
 		  }
 		}
 		else {
@@ -769,6 +772,10 @@ if (scalar(@drives_status_critical) > 0) {
 
 if (scalar(@drives_status_warning) > 0) {
   push @drives_status_not_okay, @drives_status_warning;
+}
+
+if (scalar(@drives_status_unknown) > 0) {
+  push @drives_status_not_okay, @drives_status_unknown;
 }
 
 if (@drives_status_not_okay) {

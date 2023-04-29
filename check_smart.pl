@@ -71,7 +71,7 @@ my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_hide_sn);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -90,6 +90,7 @@ GetOptions(
         "l"   => \$opt_l, "ssd-lifetime"  => \$opt_l,
 			  "skip-self-assessment" => \$opt_skip_sa,
 			  "skip-temp-check" => \$opt_skip_temp,
+			  "hide-sn" => \$opt_hide_sn,
 );
 
 if ($opt_v) {
@@ -356,8 +357,13 @@ foreach $device ( split("\\|",$device) ){
 			}
 			if($line =~ /$line_serial_ata(.+)/){
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
-				$serial = $1;
-				$serial =~ s/^\s+|\s+$//g;
+				if($opt_hide_sn) {
+				  $serial = "<HIDDEN>";
+				  warn "(debug) Hiding serial number\n\n" if $opt_debug;
+				} else {
+				  $serial = $1;
+				  $serial =~ s/^\s+|\s+$//g;
+				}
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_serial_scsi(.+)/){

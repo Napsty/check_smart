@@ -71,7 +71,7 @@ my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_hide_sn);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_hide_sn);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -90,6 +90,7 @@ GetOptions(
         "l"   => \$opt_l, "ssd-lifetime"  => \$opt_l,
 			  "skip-self-assessment" => \$opt_skip_sa,
 			  "skip-temp-check" => \$opt_skip_temp,
+			  "skip-load-cycles" => \$opt_skip_load_cycles,
 			  "hide-sn" => \$opt_hide_sn,
 );
 
@@ -505,6 +506,19 @@ foreach $device ( split("\\|",$device) ){
 					warn "(debug) SMART Attribute $attribute_name was set to be ignored\n\n" if $opt_debug;
 					next;
 				} else {
+				# alert for high load cycles, generally up to 600K cycles are considered safe on HDDs
+				unless($opt_skip_load_cycles) {
+				  if ($attribute_number == 193) {
+					if ($raw_value > 600000) {
+					  warn "(debug) $attribute_name is above value considered safe (600K)\n\n" if $opt_debug;
+					  push(@error_messages, "$attribute_name is above 600K load cycles ($raw_value) causing possible performance and durability impact");
+					  escalate_status('CRITICAL');
+					} elsif ($raw_value < 600000 && $raw_value > 550000) {
+					  warn "(debug) $attribute_name is nearing 600K load cycles\n\n" if $opt_debug;
+				          push(@warning_messages, "$attribute_name is soon reaching 600K load cycles ($raw_value) causing possible performance and durability impact soon");
+					}
+				  }
+				}
 				# manual checks on raw values for certain attributes deemed significant
 				  if (grep {$_ eq $attribute_name} @raw_check_list) {
 				    if ($raw_value > 0) {
@@ -841,6 +855,8 @@ sub print_help {
         print "  -l/--ssd-lifetime: Check attribute 'Percent_Lifetime_Remain' available on some SSD drives\n";
         print "  --skip-self-assessment: Skip SMART self-assessment health status check\n";
         print "  --skip-temp-check: Skip temperature comparison current vs. drive max temperature\n";
+        print "  --skip-load-cycles: Do not alert on high load/unload cycle count (600K considered safe on hard drives)\n";
+        print "  --hide-sn: Do not show drive serial number in output\n";
         print "  -h/--help: this help\n";
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";

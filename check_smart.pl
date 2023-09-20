@@ -58,14 +58,15 @@
 # Apr 29, 2023: Nick Bertrand - Show drive(s) causing UNKNOWN status using -g/--global check (6.14.0)
 # Apr 29, 2023: Claudio Kuenzler - Add possibility to hide serial number (--hide-sn) (6.14.0)
 # Apr 29, 2023: Claudio Kuenzler - Add default check on Load Cycle Count (ignore using --skip-load-cycles) (6.14.0)
-# Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given
+# Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given (6.14.1)
+# Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.14.0';
+my $revision = '6.14.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -283,6 +284,7 @@ foreach $device ( split("\\|",$device) ){
 		warn "###########################################################\n\n\n" if $opt_debug;
 
 		my $full_command = "$smart_command -d $interface -Hi $device";
+		$full_command = "$smart_command -d $interface -Hi $device -q noserial" if $opt_hide_sn;
 		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
 		my @output = `$full_command`;
@@ -473,7 +475,7 @@ foreach $device ( split("\\|",$device) ){
 		@output = `$full_command`;
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
-		warn "(debug) Raw Check List ATA: $raw_check_list\n" if $opt_debug;
+		warn "(debug) Raw Check List ATA: @raw_check_list\n" if $opt_debug;
 		warn "(debug) Raw Check List NVMe: $raw_check_list_nvme\n" if $opt_debug;
 		warn "(debug) Exclude List for Checks: ", join(",", @exclude_checks), "\n" if $opt_debug;
 		warn "(debug) Exclude List for Perfdata: ", join(",", @exclude_perfdata), "\n" if $opt_debug;
@@ -837,7 +839,7 @@ sub print_revision {
 
 sub print_help {
         print_revision($basename,$revision);
-        print "\nUsage: $basename {-d=<block device>|-g=<block device glob>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|aacraid,H,L,ID|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [--debug]\n\n";
+        print "\nUsage: $basename {-d=<block device>|-g=<block device glob>} -i=(auto|ata|scsi|3ware,N|areca,N|hpt,L/M/N|aacraid,H,L,ID|cciss,N|megaraid,N) [-r list] [-w list] [-b N] [-e list] [-E list] [-s] [-l] [--debug]\n\n";
         print "At least one of the below. -d supersedes -g\n";
         print "  -d/--device: a physical block device to be SMART monitored, eg /dev/sda. Pseudo-device /dev/bus/N is allowed.\n";
         print "  -g/--global: a glob pattern name of physical devices to be SMART monitored\n";

@@ -58,6 +58,7 @@
 # Apr 29, 2023: Nick Bertrand - Show drive(s) causing UNKNOWN status using -g/--global check (6.14.0)
 # Apr 29, 2023: Claudio Kuenzler - Add possibility to hide serial number (--hide-sn) (6.14.0)
 # Apr 29, 2023: Claudio Kuenzler - Add default check on Load Cycle Count (ignore using --skip-load-cycles) (6.14.0)
+# Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given
 
 use strict;
 use Getopt::Long;
@@ -228,7 +229,6 @@ my @raw_check_list_nvme = split /,/, $raw_check_list_nvme;
 
 # warning threshold list (for raw checks)
 my $warn_list = $opt_w // '';
-$warn_list = $opt_w // 'Percent_Lifetime_Remain=90' if $opt_l;
 my @warn_list = split /,/, $warn_list;
 my %warn_list;
 my $warn_key;
@@ -236,6 +236,9 @@ my $warn_value;
 foreach my $warn_element (@warn_list) {
   ($warn_key, $warn_value) = split /=/, $warn_element;
   $warn_list{ $warn_key } = $warn_value;
+}
+if ($opt_l && ! exists $warn_list{'Percent_Lifetime_Remain'}) {
+    $warn_list{'Percent_Lifetime_Remain'} = 90;
 }
 
 # For backward compatibility, add -b parameter to warning thresholds

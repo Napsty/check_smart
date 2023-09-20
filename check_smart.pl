@@ -470,7 +470,7 @@ foreach $device ( split("\\|",$device) ){
 		@output = `$full_command`;
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
 		my @perfdata = qw//;
-		warn "(debug) Raw Check List ATA: $raw_check_list\n" if $opt_debug;
+		warn "(debug) Raw Check List ATA: @raw_check_list\n" if $opt_debug;
 		warn "(debug) Raw Check List NVMe: $raw_check_list_nvme\n" if $opt_debug;
 		warn "(debug) Exclude List for Checks: ", join(",", @exclude_checks), "\n" if $opt_debug;
 		warn "(debug) Exclude List for Perfdata: ", join(",", @exclude_perfdata), "\n" if $opt_debug;

@@ -60,7 +60,7 @@
 # Apr 29, 2023: Claudio Kuenzler - Add default check on Load Cycle Count (ignore using --skip-load-cycles) (6.14.0)
 # Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given (6.14.1)
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
-# Mar 6, 2024: Yannick Martin - Fix nvme attribute check-list when auto interface is given and device is nvme (6.14.2)
+# Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
 
 use strict;
 use Getopt::Long;

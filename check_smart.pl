@@ -60,13 +60,14 @@
 # Apr 29, 2023: Claudio Kuenzler - Add default check on Load Cycle Count (ignore using --skip-load-cycles) (6.14.0)
 # Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given (6.14.1)
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
+# Mar 6, 2024: Yannick Martin - Fix nvme attribute check-list when auto interface is given and device is nvme (6.14.2)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.14.1';
+my $revision = '6.14.2';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -327,7 +328,7 @@ foreach $device ( split("\\|",$device) ){
 					$output_mode = "nvme";
 					warn "(debug) setting output mode to nvme\n" if $opt_debug;
 				} else {
-					$output_mode = "ata";
+					$output_mode = "ata" unless $output_mode;
 				}
 				warn "(debug) parsing line:\n$line\n" if $opt_debug;
 				if ($1 eq $ok_str_ata) {
@@ -347,6 +348,7 @@ foreach $device ( split("\\|",$device) ){
 				warn "(debug) found model: $model\n\n" if $opt_debug;
 			}
 			if($line =~ /$line_model_nvme(.+)/){
+				$output_mode = "nvme";
 				warn "(debug) parsing line:\n$line\n\n" if $opt_debug;
 				$model = $1;
 				$model =~ s/\s{2,}/ /g;

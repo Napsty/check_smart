@@ -61,13 +61,14 @@
 # Sep 20, 2023: Yannick Martin - Fix default Percent_Lifetime_Remain threshold handling when -w is given (6.14.1)
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
 # Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
+# Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.14.2';
+my $revision = '6.14.3';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -508,7 +509,7 @@ foreach $device ( split("\\|",$device) ){
 					next;
 				}
 				if (!grep {$_ eq $attribute_number || $_ eq $attribute_name} @exclude_perfdata) {
-					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+					push (@perfdata, "$attribute_name=$raw_value;;;;") if $opt_d;
 				}
 
 				# skip attribute if it was set to be ignored in exclude_checks
@@ -569,7 +570,7 @@ foreach $device ( split("\\|",$device) ){
 				}
 				# create performance data unless defined in exclude_perfdata list
 				if (!grep {$_ eq $attribute_name} @exclude_perfdata) {
-					push (@perfdata, "$attribute_name=$raw_value") if $opt_d;
+					push (@perfdata, "$attribute_name=$raw_value;;;;") if $opt_d;
 				}
 
 				# skip attribute if it was set to be ignored in exclude_checks
@@ -688,7 +689,7 @@ foreach $device ( split("\\|",$device) ){
 					my $defectlist = $1;
 					# check for elements in grown defect list
 					if ($opt_b) {
-						push (@perfdata, "defect_list=$defectlist;;$opt_b") if $opt_d;
+						push (@perfdata, "defect_list=$defectlist;$opt_b;$opt_b;;") if $opt_d;
 						if (($defectlist > 0) && ($defectlist >= $opt_b)) {
 							push(@warning_messages, "$defectlist Elements in grown defect list (threshold $opt_b)");
 							escalate_status('WARNING');
@@ -701,20 +702,20 @@ foreach $device ( split("\\|",$device) ){
 					}
 					else {
 						if ($defectlist > 0) {
-							push (@perfdata, "defect_list=$defectlist") if $opt_d;
 							push(@warning_messages, "$defectlist Elements in grown defect list");
 							escalate_status('WARNING');
 							warn "(debug) Elements in grown defect list is non-zero ($defectlist)\n\n" if $opt_debug;
 						}
+						push (@perfdata, "defect_list=$defectlist;;;;") if $opt_d;
 					}
 				}
 				elsif ($line =~ /Blocks sent to initiator =\s+(\d+)/){
-					push (@perfdata, "sent_blocks=$1") if $opt_d;
+					push (@perfdata, "sent_blocks=$1;;;;") if $opt_d;
 				}
 			}
 			if($current_temperature){
 				if($max_temperature){
-					push (@perfdata, "temperature=$current_temperature;;$max_temperature") if $opt_d;
+					push (@perfdata, "temperature=$current_temperature;;$max_temperature;0;") if $opt_d;
 					unless($opt_skip_temp) {
 						if($current_temperature > $max_temperature){
 							warn "(debug) Disk temperature is greater than max ($current_temperature > $max_temperature)\n\n" if $opt_debug;
@@ -724,12 +725,12 @@ foreach $device ( split("\\|",$device) ){
 					}
 				}
 				else{
-					push (@perfdata, "temperature=$current_temperature") if $opt_d;
+					push (@perfdata, "temperature=$current_temperature;;;;") if $opt_d;
 				}
 			}
 			if($current_start_stop){
 				if($max_start_stop){
-					push (@perfdata, "start_stop=$current_start_stop;$max_start_stop") if $opt_d;
+					push (@perfdata, "start_stop=$current_start_stop;;;;$max_start_stop") if $opt_d;
 					if($current_start_stop > $max_start_stop){
 						warn "(debug) Disk start_stop is greater than max ($current_start_stop > $max_start_stop)\n\n" if $opt_debug;
 						push(@warning_messages, 'Disk start_stop is higher than maximum');
@@ -737,7 +738,7 @@ foreach $device ( split("\\|",$device) ){
 					}
 				}
 				else{
-					push (@perfdata, "start_stop=$current_start_stop") if $opt_d;
+					push (@perfdata, "start_stop=$current_start_stop;;;;") if $opt_d;
 				}
 			}
 		}

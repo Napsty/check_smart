@@ -62,13 +62,14 @@
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
 # Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
-# Sep 11, 2024: Tomas Barton - Ignore old age attributes due to unrealiability
+# Sep 11, 2024: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
+
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.14.3';
+my $revision = '6.15.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -78,7 +79,7 @@ my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_o $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_hide_sn);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_o $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_skip_error_log $opt_hide_sn);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -99,6 +100,7 @@ GetOptions(
 			  "skip-self-assessment" => \$opt_skip_sa,
 			  "skip-temp-check" => \$opt_skip_temp,
 			  "skip-load-cycles" => \$opt_skip_load_cycles,
+			  "skip-error-log" => \$opt_skip_error_log,
 			  "hide-sn" => \$opt_hide_sn,
 );
 
@@ -128,7 +130,7 @@ if ($opt_d || $opt_g ) {
             # normal mode - push opt_d on the list of devices
             push(@dev,$opt_d);
         } else {
-            # glob all devices - try '?' first 
+            # glob all devices - try '?' first
             @dev =glob($opt_g);
         }
 
@@ -474,7 +476,7 @@ foreach $device ( split("\\|",$device) ){
 		warn "(debug) plus, we can also use the information for perfdata/graphing\n" if $opt_debug;
 		warn "###########################################################\n\n\n" if $opt_debug;
 
-		$full_command = "$smart_command -d $interface -A $device";
+		$full_command = "$smart_command -d $interface -a $device";
 		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 		@output = `$full_command`;
 		warn "(debug) output:\n@output\n\n" if $opt_debug;
@@ -491,6 +493,24 @@ foreach $device ( split("\\|",$device) ){
 		# Yeah - but megaraid is the same output as ata
 		if ($output_mode =~ "ata") {
 			foreach my $line(@output){
+				unless ($opt_skip_error_log) {
+					if ($line =~ /^ATA Error Count:\s(\d+)\s/) {
+						my ($attribute_name, $raw_value) = ('ata_errors', $1);
+						if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
+							warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+							push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
+							escalate_status('WARNING');
+						} elsif ( ($warn_list{$attribute_name}) && ($raw_value < $warn_list{$attribute_name}) ) {
+							warn "(debug) $attribute_name is non-zero ($raw_value) but less than $warn_list{$attribute_name}\n\n" if $opt_debug;
+							push(@notice_messages, "$attribute_name is non-zero ($raw_value) (but less than threshold $warn_list{$attribute_name})");
+						} else {
+							warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
+							push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
+							escalate_status('WARNING');
+						}
+						push (@perfdata, "$attribute_name=$raw_value;;;;")
+					}
+				}
 				# get lines that look like this:
 				#    9 Power_On_Minutes        0x0032   241   241   000    Old_age   Always       -       113h+12m
 				next unless $line =~ /^\s*(\d+)\s(\S+)\s+(?:\S+\s+){6}(\S+)\s+(\d+)/;
@@ -752,6 +772,7 @@ foreach $device ( split("\\|",$device) ){
 				}
 			}
 		}
+
 		warn "(debug) gathered perfdata:\n@perfdata\n\n" if $opt_debug;
 		$perf_string = join(' ', @perfdata);
 		

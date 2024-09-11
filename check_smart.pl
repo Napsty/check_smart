@@ -500,9 +500,14 @@ foreach $device ( split("\\|",$device) ){
 					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_checks) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
-					push(@warning_messages, "Attribute $attribute_name failed at $when_failed");
-					escalate_status('WARNING');
-					warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
+						if ($opt_o) {
+							if ($attribute_number == 202) { # Percent_Lifetime_Used might not be reliable health indicator
+								next;
+							}
+						}
+						push(@warning_messages, "Attribute $attribute_name failed at $when_failed");
+						escalate_status('WARNING');
+						warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
 					}
 				}
 				# some attributes produce questionable data; no need to graph them

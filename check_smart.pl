@@ -62,7 +62,7 @@
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
 # Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
-
+# Sep 11, 2024: Tomas Barton - Ignore old age attributes due to unrealiability
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
@@ -78,7 +78,7 @@ my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_hide_sn);
+use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_o $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_hide_sn);
 Getopt::Long::Configure('bundling');
 GetOptions(
                           "debug"         => \$opt_debug,
@@ -89,6 +89,7 @@ GetOptions(
         "i=s" => \$opt_i, "interface=s"   => \$opt_i,
         "e=s" => \$opt_e, "exclude=s"     => \$opt_e,
         "E=s" => \$opt_E, "exclude-all=s" => \$opt_E,
+        "O"   => \$opt_o, "oldage"        => \$opt_o,
         "q"   => \$opt_q, "quiet"         => \$opt_q,
         "r=s" => \$opt_r, "raw=s"         => \$opt_r,
         "s"   => \$opt_s, "selftest"      => \$opt_s,
@@ -499,9 +500,14 @@ foreach $device ( split("\\|",$device) ){
 					if (grep {$_ eq $attribute_number || $_ eq $attribute_name || $_ eq $when_failed} @exclude_checks) {
 					  warn "SMART Attribute $attribute_name failed at $when_failed but was set to be ignored\n" if $opt_debug;
 					} else {
-					push(@warning_messages, "Attribute $attribute_name failed at $when_failed");
-					escalate_status('WARNING');
-					warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
+						if ($opt_o) {
+							if ($attribute_number == 202) { # Percent_Lifetime_Used might not be reliable health indicator
+								next;
+							}
+						}
+						push(@warning_messages, "Attribute $attribute_name failed at $when_failed");
+						escalate_status('WARNING');
+						warn "(debug) parsed SMART attribute $attribute_name with error condition:\n$when_failed\n\n" if $opt_debug;
 					}
 				}
 				# some attributes produce questionable data; no need to graph them
@@ -594,8 +600,12 @@ foreach $device ( split("\\|",$device) ){
 				          escalate_status('WARNING');
 					}
 					elsif ($raw_value eq '0x04') {
-					  push(@warning_messages, "NVM subsystem reliability degraded");
-				          escalate_status('WARNING');
+						if ($opt_o) {
+							warn "(debug) $attribute_name = '0x04' was set to be ignored due to oldage flag\n\n" if $opt_debug;
+						} else {
+							push(@warning_messages, "NVM subsystem reliability degraded");
+									escalate_status('WARNING');
+						}
 					}
 					elsif ($raw_value eq '0x05') {
 					  push(@warning_messages, "Available spare below threshold and NVM subsystem reliability degraded");
@@ -869,6 +879,7 @@ sub print_help {
         print "  --skip-load-cycles: Do not alert on high load/unload cycle count (600K considered safe on hard drives)\n";
         print "  --hide-sn: Do not show drive serial number in output\n";
         print "  -h/--help: this help\n";
+        print "  -O/--oldage: Ignore old age attributes\n";
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";

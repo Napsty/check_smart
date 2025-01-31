@@ -62,7 +62,7 @@
 # Sep 20, 2023: Claudio Kuenzler - Fix debug output for raw check list, fix --hide-serial in debug output (6.14.1)
 # Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
-# Sep 11, 2024: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
+# Jan 31, 2025: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
 
 use strict;
 use Getopt::Long;
@@ -898,6 +898,7 @@ sub print_help {
         print "  --skip-self-assessment: Skip SMART self-assessment health status check\n";
         print "  --skip-temp-check: Skip temperature comparison current vs. drive max temperature\n";
         print "  --skip-load-cycles: Do not alert on high load/unload cycle count (600K considered safe on hard drives)\n";
+        print "  --skip-error-log: Do not alert on errors found in ATA log (ATA Error Count)\n";
         print "  --hide-sn: Do not show drive serial number in output\n";
         print "  -h/--help: this help\n";
         print "  -O/--oldage: Ignore old age attributes\n";

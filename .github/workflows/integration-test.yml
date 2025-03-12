@@ -17,9 +17,16 @@ jobs:
 
     - name: Create test device
       run: |
+        # Install smartmontools
+        sudo apt-get update
+        sudo apt-get install -y smartmontools
+
         # Create a 100MB test file to simulate a block device
         sudo dd if=/dev/zero of=/tmp/testdisk bs=1M count=100
         sudo losetup /dev/loop0 /tmp/testdisk
+
+        # Initialize SMART data on the device
+        sudo smartctl -s on /dev/loop0
 
     - name: Run basic tests
       run: |

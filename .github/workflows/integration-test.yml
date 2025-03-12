@@ -15,18 +15,29 @@ jobs:
     - name: Build Docker image
       run: docker build -t check-smart .
 
-    - name: Create test device
+    - name: Create virtual disk
       run: |
-        # Install smartmontools
+        # Install required packages
         sudo apt-get update
-        sudo apt-get install -y smartmontools
+        sudo apt-get install -y qemu-utils qemu-system-x86 smartmontools
 
-        # Create a 100MB test file to simulate a block device
-        sudo dd if=/dev/zero of=/tmp/testdisk bs=1M count=100
-        sudo losetup /dev/loop0 /tmp/testdisk
+        # Create a virtual disk
+        qemu-img create -f raw /tmp/disk.img 1G
 
-        # Initialize SMART data on the device
-        sudo smartctl -s on /dev/loop0
+        # Start QEMU with the virtual disk
+        sudo qemu-system-x86_64 -enable-kvm -m 256 \
+          -drive file=/tmp/disk.img,format=raw,if=ide \
+          -nographic -daemonize
+
+        # Wait for device to appear
+        sleep 5
+
+        # Find the device name (usually /dev/sdb or similar)
+        DEVICE=$(lsblk -d -o NAME,TYPE | grep disk | tail -n1 | cut -d' ' -f1)
+        echo "DEVICE=/dev/$DEVICE" >> $GITHUB_ENV
+
+        # Enable SMART on the device
+        sudo smartctl -s on /dev/$DEVICE
 
     - name: Run basic tests
       run: |
@@ -36,11 +47,12 @@ jobs:
         # Test version output
         docker run check-smart /usr/lib/nagios/plugins/check_smart.pl -v
 
-        # Test with simulated device (should return UNKNOWN since it's not a real SMART device)
-        docker run --device=/dev/loop0 check-smart /usr/lib/nagios/plugins/check_smart.pl -d /dev/loop0 -i auto || [ $? -eq 3 ]
+        # Test with real device
+        docker run --device=/dev/${{ env.DEVICE }} check-smart /usr/lib/nagios/plugins/check_smart.pl -d /dev/${{ env.DEVICE }} -i auto
 
     - name: Cleanup
       if: always()
       run: |
-        sudo losetup -d /dev/loop0
-        sudo rm /tmp/testdisk
+        # Kill QEMU
+        sudo pkill qemu-system-x86
+        rm -f /tmp/disk.img

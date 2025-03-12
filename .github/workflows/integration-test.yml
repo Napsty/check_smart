@@ -24,13 +24,13 @@ jobs:
     - name: Run basic tests
       run: |
         # Test help output
-        docker run check-smart --help
+        docker run check-smart /usr/lib/nagios/plugins/check_smart.pl --help
 
         # Test version output
-        docker run check-smart -v
+        docker run check-smart /usr/lib/nagios/plugins/check_smart.pl -v
 
         # Test with simulated device (should return UNKNOWN since it's not a real SMART device)
-        docker run --device=/dev/loop0 check-smart -d /dev/loop0 -i auto || [ $? -eq 3 ]
+        docker run --device=/dev/loop0 check-smart /usr/lib/nagios/plugins/check_smart.pl -d /dev/loop0 -i auto || [ $? -eq 3 ]
 
     - name: Cleanup
       if: always()

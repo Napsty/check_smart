@@ -1,0 +1,39 @@
+name: Integration Test
+
+on:
+  push:
+    branches: [ main, vibe ]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: docker build -t check-smart .
+
+    - name: Create test device
+      run: |
+        # Create a 100MB test file to simulate a block device
+        sudo dd if=/dev/zero of=/tmp/testdisk bs=1M count=100
+        sudo losetup /dev/loop0 /tmp/testdisk
+
+    - name: Run basic tests
+      run: |
+        # Test help output
+        docker run check-smart --help
+
+        # Test version output
+        docker run check-smart -v
+
+        # Test with simulated device (should return UNKNOWN since it's not a real SMART device)
+        docker run --device=/dev/loop0 check-smart -d /dev/loop0 -i auto || [ $? -eq 3 ]
+
+    - name: Cleanup
+      if: always()
+      run: |
+        sudo losetup -d /dev/loop0
+        sudo rm /tmp/testdisk

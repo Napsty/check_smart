@@ -63,6 +63,7 @@
 # Mar 15, 2024: Yannick Martin - Fix nvme check when auto interface is given and device is nvme (6.14.2)
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
 # Jan 31, 2025: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
+# May 19, 2025: Alexander Kanevskiy - Add usbjmicron devics (6.16.0)
 
 use strict;
 use Getopt::Long;
@@ -153,7 +154,7 @@ if ($opt_d || $opt_g ) {
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
 
-        if ($opt_i =~ m/^(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme)/) {
+        if ($opt_i =~ m/^(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme|usbjmicron)/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";
@@ -177,6 +178,12 @@ if ($opt_d || $opt_g ) {
             $interface = "";
             for(my $k = $1; $k <= $2; $k++) {
               $interface .= "aacraid," . $k . "|";
+            }
+          }
+          elsif($interface =~ m/usbjmicron,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "usbjmicron," . $k . "|";
             }
           }
           else {

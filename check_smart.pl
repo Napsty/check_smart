@@ -64,6 +64,7 @@
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
 # Jan 31, 2025: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
 # Jun 12, 2025: Alexander Kanevskiy - Add usbjmicron devices (6.16.0)
+# Oct 3, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning
 
 use strict;
 use Getopt::Long;
@@ -503,7 +504,9 @@ foreach $device ( split("\\|",$device) ){
 				unless ($opt_skip_error_log) {
 					if ($line =~ /^ATA Error Count:\s(\d+)\s/) {
 						my ($attribute_name, $raw_value) = ('ata_errors', $1);
-						if ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
+						if ( $raw_value == 0) {
+							next;
+						} elsif ( ($warn_list{$attribute_name}) && ($raw_value >= $warn_list{$attribute_name}) ) {
 							warn "(debug) $attribute_name is non-zero ($raw_value)\n\n" if $opt_debug;
 							push(@warning_messages, "$attribute_name is non-zero ($raw_value)");
 							escalate_status('WARNING');

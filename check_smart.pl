@@ -187,6 +187,12 @@ if ($opt_d || $opt_g ) {
               $interface .= "usbjmicron," . $k . "|";
             }
           }
+          elsif($interface =~ m/areca,\[(\d{1,2})-(\d{1,2})\]/) {
+            $interface = "";
+            for(my $k = $1; $k <= $2; $k++) {
+              $interface .= "areca," . $k . "|";
+            }
+          }
           else {
             $interface .= "|";
           }
@@ -280,7 +286,7 @@ foreach $device ( split("\\|",$device) ){
 			# we had a pattern based on $opt_g
 			$tag   = $device;
 			$tag   =~ s/\Q$opt_g\E//;
-                        if($interface =~ qr/(?:megaraid|3ware|aacraid|cciss)/){
+                        if($interface =~ qr/(?:megaraid|3ware|aacraid|cciss|areca)/){
 			  $label = "[$interface] - "; 
                         } else {
 			  $label = "[$device] - ";

@@ -64,14 +64,15 @@
 # Sep 10, 2024: Claudio Kuenzler - Fix performance data format, missing perfdata in SCSI drives (6.14.3)
 # Jan 31, 2025: Tomas Barton - Ignore old age attributes due to its unrealiability. Check ATA error logs (6.15.0)
 # Jun 12, 2025: Alexander Kanevskiy - Add usbjmicron devices (6.16.0)
-# Oct 3, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning
+# Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
+# Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.16.0';
+my $revision = '6.17.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);

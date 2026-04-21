@@ -66,14 +66,14 @@
 # Jun 12, 2025: Alexander Kanevskiy - Add usbjmicron devices (6.16.0)
 # Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
-# Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command (6.17.1)
+# Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.17.1';
+my $revision = '6.18.0';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -408,6 +408,11 @@ foreach $device ( split("\\|",$device) ){
 				$serial = $1;
 				$serial =~ s/^\s+|\s+$//g;
 				warn "(debug) found serial number $serial\n\n" if $opt_debug;
+			}
+			if($line =~ /NVME_IOCTL_ADMIN_CMD: Input\/output error/){
+				warn "(debug) NVMe I/O error detected:\n$line\n\n" if $opt_debug;
+				push(@error_messages, 'NVMe I/O error (possible drive failure)');
+				escalate_status('CRITICAL');
 			}
 
 		}

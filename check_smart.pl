@@ -66,13 +66,14 @@
 # Jun 12, 2025: Alexander Kanevskiy - Add usbjmicron devices (6.16.0)
 # Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
+# Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command (6.17.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.17.0';
+my $revision = '6.17.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -115,6 +116,24 @@ if ($opt_v) {
 if ($opt_h) {
         print_help();
         exit $ERRORS{'OK'};
+}
+
+my $sudo_command = '';
+my $smart_command = undef;
+
+foreach my $path (@sys_path) {
+	$sudo_command = "$path/sudo" if ($sudo_command eq '' && -x "$path/sudo");
+	$smart_command = "$path/smartctl" if (!defined($smart_command) && -x "$path/smartctl");
+	last if ($sudo_command ne '' && defined($smart_command));
+}
+
+if (!defined($smart_command)) {
+	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
+	exit $ERRORS{'UNKNOWN'};
+}
+
+if ($sudo_command ne '') {
+	$smart_command = "$sudo_command $smart_command";
 }
 
 my ($device, $interface) = qw// // '';
@@ -211,18 +230,6 @@ if ($device eq "") {
     exit $ERRORS{'UNKNOWN'};
 }
 
-my $smart_command = undef;
-foreach my $path (@sys_path) {
-	if (-x "$path/smartctl") {
-		$smart_command = "sudo $path/smartctl";
-		last;
-	}
-}
-
-if (!defined($smart_command)) {
-	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
-	exit $ERRORS{'UNKNOWN'};
-}
 
 my $exit_status = 'OK';
 my $exit_status_local = 'OK';

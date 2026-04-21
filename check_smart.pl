@@ -66,13 +66,14 @@
 # Jun 12, 2025: Alexander Kanevskiy - Add usbjmicron devices (6.16.0)
 # Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
+# Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command (6.17.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.17.0';
+my $revision = '6.17.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);

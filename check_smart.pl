@@ -83,24 +83,6 @@ my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
 $ENV{'ENV'}='';
 
-my $sudo_command = '';
-my $smart_command = undef;
-
-foreach my $path (@sys_path) {
-	$sudo_command = "$path/sudo" if ($sudo_command eq '' && -x "$path/sudo");
-	$smart_command = "$path/smartctl" if (!defined($smart_command) && -x "$path/smartctl");
-	last if ($sudo_command ne '' && defined($smart_command));
-}
-
-if (!defined($smart_command)) {
-	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
-	exit $ERRORS{'UNKNOWN'};
-}
-
-if ($sudo_command ne '') {
-	$smart_command = "$sudo_command $smart_command";
-}
-
 use vars qw($opt_b $opt_d $opt_g $opt_debug $opt_h $opt_i $opt_e $opt_E $opt_o $opt_r $opt_s $opt_v $opt_w $opt_q $opt_l $opt_skip_sa $opt_skip_temp $opt_skip_load_cycles $opt_skip_error_log $opt_hide_sn);
 Getopt::Long::Configure('bundling');
 GetOptions(
@@ -134,6 +116,24 @@ if ($opt_v) {
 if ($opt_h) {
         print_help();
         exit $ERRORS{'OK'};
+}
+
+my $sudo_command = '';
+my $smart_command = undef;
+
+foreach my $path (@sys_path) {
+	$sudo_command = "$path/sudo" if ($sudo_command eq '' && -x "$path/sudo");
+	$smart_command = "$path/smartctl" if (!defined($smart_command) && -x "$path/smartctl");
+	last if ($sudo_command ne '' && defined($smart_command));
+}
+
+if (!defined($smart_command)) {
+	print "UNKNOWN - Could not find executable smartctl in " . join(", ", @sys_path) . "\n";
+	exit $ERRORS{'UNKNOWN'};
+}
+
+if ($sudo_command ne '') {
+	$smart_command = "$sudo_command $smart_command";
 }
 
 my ($device, $interface) = qw// // '';

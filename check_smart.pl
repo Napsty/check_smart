@@ -67,13 +67,14 @@
 # Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
 # Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
+# Apr 24, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
 
 my $basename = basename($0);
-my $revision = '6.18.0';
+my $revision = '6.18.1';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -157,12 +158,13 @@ if ($opt_d || $opt_g ) {
         }
 
         foreach my $opt_dl (@dev){
-            warn "Found $opt_dl\n" if $opt_debug;
-            if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
+            warn "(debug) Found $opt_dl\n" if $opt_debug;
+            if (-l $opt_dl) {
+                warn "(debug) $opt_dl is a symlink, skipping for security reasons\n" if $opt_debug;
+            } elsif (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
                 $device .= $opt_dl."|";
-
             } else {
-                warn "$opt_dl is not a valid block/character special device!\n\n" if $opt_debug;
+                warn "(debug) $opt_dl is not a valid block/character special device!\n\n" if $opt_debug;
             }
         }
 
@@ -174,8 +176,11 @@ if ($opt_d || $opt_g ) {
 
         # Allow all device types currently supported by smartctl
         # See http://www.smartmontools.org/wiki/Supported_RAID-Controllers
-
-        if ($opt_i =~ m/^(ata|scsi|3ware|areca|hpt|aacraid|cciss|megaraid|sat|auto|nvme|usbjmicron)/) {
+        # Validate interface parameter strictly to prevent command injection
+        # Simple interfaces must match exactly; RAID interfaces allow device specifiers (see --help)
+        if ($opt_i =~ m/^(ata|scsi|sat|auto|nvme)$/ ||
+            $opt_i =~ m/^(3ware|areca|aacraid|cciss|megaraid|usbjmicron),(\d+|\[\d+-\d+\])$/ ||
+            $opt_i =~ m/^hpt,\d+\/\d+\/\d+$/) {
             $interface = $opt_i;
           if($interface =~ m/megaraid,\[(\d{1,2})-(\d{1,2})\]/) {
             $interface = "";

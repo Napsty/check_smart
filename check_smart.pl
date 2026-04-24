@@ -159,9 +159,10 @@ if ($opt_d || $opt_g ) {
 
         foreach my $opt_dl (@dev){
             warn "Found $opt_dl\n" if $opt_debug;
-            if (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
+            if (-l $opt_dl) {
+                warn "$opt_dl is a symlink, skipping for security reasons\n\n" if $opt_debug;
+            } elsif (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
                 $device .= $opt_dl."|";
-
             } else {
                 warn "$opt_dl is not a valid block/character special device!\n\n" if $opt_debug;
             }

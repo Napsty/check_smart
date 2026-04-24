@@ -67,7 +67,7 @@
 # Dec 15, 2025: Florian Sager - Fix evaluating ATA Error Count: 0 as a warning (6.17.0)
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
 # Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
-# Apr 22, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
+# Apr 24, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
 
 use strict;
 use Getopt::Long;

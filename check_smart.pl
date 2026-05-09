@@ -68,13 +68,15 @@
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
 # Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
 # Apr 24, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
+# TBD Claudio Kuenzler - Fix regression with symlink paths (6.18.2)
 
 use strict;
 use Getopt::Long;
 use File::Basename qw(basename);
+use Cwd qw(abs_path);
 
 my $basename = basename($0);
-my $revision = '6.18.1';
+my $revision = '6.18.2';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -160,7 +162,14 @@ if ($opt_d || $opt_g ) {
         foreach my $opt_dl (@dev){
             warn "(debug) Found $opt_dl\n" if $opt_debug;
             if (-l $opt_dl) {
-                warn "(debug) $opt_dl is a symlink, skipping for security reasons\n" if $opt_debug;
+                # Resolve symlink and use the real path to prevent command injection
+                my $real_path = abs_path($opt_dl);
+                if (defined($real_path) && (-b $real_path || -c $real_path)) {
+                    warn "(debug) $opt_dl is a symlink to block device $real_path, using resolved path\n" if $opt_debug;
+                    $device .= $real_path."|";
+                } else {
+                    warn "(debug) $opt_dl is a symlink not pointing to a valid block device, skipping\n" if $opt_debug;
+                }
             } elsif (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
                 $device .= $opt_dl."|";
             } else {

@@ -68,7 +68,7 @@
 # Dec 15, 2025: Philippe Beaumont - Add areca devices (6.17.0)
 # Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
 # Apr 24, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
-# TBD Claudio Kuenzler - Fix regression with symlink paths (6.18.2)
+# May 9, 2026: Claudio Kuenzler - Fix regression with symlink paths (6.18.2)
 
 use strict;
 use Getopt::Long;

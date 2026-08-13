@@ -448,7 +448,7 @@ foreach $device ( split("\\|",$device) ){
 		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
 		system($full_command);
-		my $return_code = $?;
+		my $return_code = decoded_exit_code($?, \@error_messages);
 		warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
 		if ($return_code & 0x01) {
@@ -498,7 +498,7 @@ foreach $device ( split("\\|",$device) ){
 			warn "(debug) selftest log check activated\n\n" if $opt_debug;
 			$full_command = "$smart_command -d $interface -q silent -l selftest $device";
 			system($full_command);
-			my $return_code = $?;
+			my $return_code = decoded_exit_code($?, \@error_messages);
 			warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
 			if ($return_code > 0) {
@@ -951,6 +951,23 @@ sub print_help {
         print "  -q/--quiet: When faults detected, only show faulted drive(s) (only affects output when used with -g parameter)\n";
         print "  --debug: show debugging information\n";
         print "  -v/--version: Version number\n";
+}
+
+# Decode the wait status of system() into smartctl's exit code. Abnormal
+# termination returns 0 so that no exit status bit is read out of a signal.
+sub decoded_exit_code {
+        my ($wait_status, $messages) = @_;
+        if ($wait_status == -1) {
+                push(@$messages, "Failed to execute $smart_command");
+                escalate_status('UNKNOWN');
+                return 0;
+        }
+        if ($wait_status & 127) {
+                push(@$messages, sprintf('smartctl died with signal %d', $wait_status & 127));
+                escalate_status('UNKNOWN');
+                return 0;
+        }
+        return $wait_status >> 8;
 }
 
 # escalate an exit status IFF it's more severe than the previous exit status

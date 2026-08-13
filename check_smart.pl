@@ -460,7 +460,7 @@ foreach $device ( split("\\|",$device) ){
 			escalate_status('UNKNOWN');
 		}
 		if ($return_code & 0x04) {
-			push(@warning_messages, 'Checksum failure');
+			push(@warning_messages, 'SMART command failed or checksum error in SMART data');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x08) {

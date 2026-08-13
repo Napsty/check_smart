@@ -81,6 +81,9 @@ my $revision = '6.18.2';
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
+# Severity ranking, used to escalate the status without ever lowering it
+my %STATUS_RANK=('OK'=>0,'UNKNOWN'=>1,'WARNING'=>2,'CRITICAL'=>3);
+
 
 my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
@@ -953,14 +956,10 @@ sub print_help {
 # escalate an exit status IFF it's more severe than the previous exit status
 sub escalate_status {
         my $requested_status = shift;
-        # no test for 'CRITICAL'; automatically escalates upwards
-        if ($requested_status eq 'WARNING') {
-                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
-        }
-        if ($requested_status eq 'UNKNOWN') {
-                return if ($exit_status|$exit_status_local) eq 'WARNING';
-                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
-        }
-        $exit_status = $requested_status;
-        $exit_status_local = $requested_status;
+        # $exit_status covers all devices, $exit_status_local only the current
+        # one; raise either only when the requested status is actually worse
+        $exit_status = $requested_status
+                if $STATUS_RANK{$requested_status} > $STATUS_RANK{$exit_status};
+        $exit_status_local = $requested_status
+                if $STATUS_RANK{$requested_status} > $STATUS_RANK{$exit_status_local};
 }

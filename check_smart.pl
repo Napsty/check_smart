@@ -475,7 +475,7 @@ foreach $device ( split("\\|",$device) ){
 			push(@warning_messages, 'Disk may be close to failure');
 			escalate_status('WARNING');
 		}
-		if ($return_code & 0x40) {
+		if (($return_code & 0x40) && !$opt_skip_error_log) {
 			push(@warning_messages, 'Error log contains errors');
 			escalate_status('WARNING');
 		}

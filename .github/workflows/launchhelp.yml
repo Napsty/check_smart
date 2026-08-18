@@ -1,6 +1,6 @@
 # @file launchhelp.yml
 ---
-name: Launch help
+name: Validate and Test
 
 # Trigger the workflow on push or pull request
 on: [push, pull_request]
@@ -9,10 +9,16 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Install perl
       run: |
         sudo apt-get install -qq -yy perl
+    - name: Perl syntax check
+      run: |
+        perl -c check_smart.pl
+    - name: Perl warnings check
+      run: |
+        perl -w -c check_smart.pl
     - name: Launch script with --help
       run: |
         ./check_smart.pl --help

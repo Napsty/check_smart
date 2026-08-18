@@ -69,6 +69,8 @@
 # Apr 21, 2026: Claudio Kuenzler - Fix sys path for sudo command. Detect NVME input/output error (6.18.0)
 # Apr 24, 2026: Claudio Kuenzler - Fix command injection vulnerability in interface parameter (6.18.1)
 # May 9, 2026: Claudio Kuenzler - Fix regression with symlink paths (6.18.2)
+# Aug 18, 2026: Arkadiusz Miskiewicz - Fix exit handling on smartctl error codes (6.18.3)
+# Aug 18, 2026: Michael Metz - Fix /dev/bus/ device path to support double-digits (6.18.3)
 
 use strict;
 use Getopt::Long;
@@ -76,7 +78,7 @@ use File::Basename qw(basename);
 use Cwd qw(abs_path);
 
 my $basename = basename($0);
-my $revision = '6.18.2';
+my $revision = '6.18.3';
 
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
@@ -173,7 +175,7 @@ if ($opt_d || $opt_g ) {
                 } else {
                     warn "(debug) $opt_dl is a symlink not pointing to a valid block device, skipping\n" if $opt_debug;
                 }
-            } elsif (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d$/) {
+            } elsif (-b $opt_dl || -c $opt_dl || $opt_dl =~ m/^\/dev\/bus\/\d{1,2}$/) {
                 $device .= $opt_dl."|";
             } else {
                 warn "(debug) $opt_dl is not a valid block/character special device!\n\n" if $opt_debug;

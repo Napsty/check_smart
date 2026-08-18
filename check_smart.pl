@@ -81,6 +81,9 @@ my $revision = '6.18.2';
 # Standard Nagios return codes
 my %ERRORS=('OK'=>0,'WARNING'=>1,'CRITICAL'=>2,'UNKNOWN'=>3,'DEPENDENT'=>4);
 
+# Severity ranking, used to escalate the status without ever lowering it
+my %STATUS_RANK=('OK'=>0,'UNKNOWN'=>1,'WARNING'=>2,'CRITICAL'=>3);
+
 
 my @sys_path = qw(/usr/bin /bin /usr/sbin /sbin /usr/local/bin /usr/local/sbin);
 $ENV{'BASH_ENV'}='';
@@ -445,7 +448,7 @@ foreach $device ( split("\\|",$device) ){
 		warn "(debug) executing:\n$full_command\n\n" if $opt_debug;
 
 		system($full_command);
-		my $return_code = $?;
+		my $return_code = decoded_exit_code($?, \@error_messages);
 		warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
 		if ($return_code & 0x01) {
@@ -457,7 +460,7 @@ foreach $device ( split("\\|",$device) ){
 			escalate_status('UNKNOWN');
 		}
 		if ($return_code & 0x04) {
-			push(@warning_messages, 'Checksum failure');
+			push(@warning_messages, 'SMART command failed or checksum error in SMART data');
 			escalate_status('WARNING');
 		}
 		if ($return_code & 0x08) {
@@ -472,7 +475,7 @@ foreach $device ( split("\\|",$device) ){
 			push(@warning_messages, 'Disk may be close to failure');
 			escalate_status('WARNING');
 		}
-		if ($return_code & 0x40) {
+		if (($return_code & 0x40) && !$opt_skip_error_log) {
 			push(@warning_messages, 'Error log contains errors');
 			escalate_status('WARNING');
 		}
@@ -495,7 +498,7 @@ foreach $device ( split("\\|",$device) ){
 			warn "(debug) selftest log check activated\n\n" if $opt_debug;
 			$full_command = "$smart_command -d $interface -q silent -l selftest $device";
 			system($full_command);
-			my $return_code = $?;
+			my $return_code = decoded_exit_code($?, \@error_messages);
 			warn "(debug) exit code:\n$return_code\n\n" if $opt_debug;
 
 			if ($return_code > 0) {
@@ -950,17 +953,30 @@ sub print_help {
         print "  -v/--version: Version number\n";
 }
 
+# Decode the wait status of system() into smartctl's exit code. Abnormal
+# termination returns 0 so that no exit status bit is read out of a signal.
+sub decoded_exit_code {
+        my ($wait_status, $messages) = @_;
+        if ($wait_status == -1) {
+                push(@$messages, "Failed to execute $smart_command");
+                escalate_status('UNKNOWN');
+                return 0;
+        }
+        if ($wait_status & 127) {
+                push(@$messages, sprintf('smartctl died with signal %d', $wait_status & 127));
+                escalate_status('UNKNOWN');
+                return 0;
+        }
+        return $wait_status >> 8;
+}
+
 # escalate an exit status IFF it's more severe than the previous exit status
 sub escalate_status {
         my $requested_status = shift;
-        # no test for 'CRITICAL'; automatically escalates upwards
-        if ($requested_status eq 'WARNING') {
-                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
-        }
-        if ($requested_status eq 'UNKNOWN') {
-                return if ($exit_status|$exit_status_local) eq 'WARNING';
-                return if ($exit_status|$exit_status_local) eq 'CRITICAL';
-        }
-        $exit_status = $requested_status;
-        $exit_status_local = $requested_status;
+        # $exit_status covers all devices, $exit_status_local only the current
+        # one; raise either only when the requested status is actually worse
+        $exit_status = $requested_status
+                if $STATUS_RANK{$requested_status} > $STATUS_RANK{$exit_status};
+        $exit_status_local = $requested_status
+                if $STATUS_RANK{$requested_status} > $STATUS_RANK{$exit_status_local};
 }
